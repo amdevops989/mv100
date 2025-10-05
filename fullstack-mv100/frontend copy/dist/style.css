@@ -1,0 +1,61 @@
+/* style.css */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 20px;
+  background: #f8f9fa;
+  color: #333;
+}
+
+h1, h2, h3 {
+  color: #2c3e50;
+}
+
+input, button {
+  margin: 4px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+.product, .order {
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin: 6px;
+  border-radius: 6px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product button, .order button {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+#auth, #products, #cart, #orders {
+  margin-bottom: 20px;
+}
+
+#cartItems div, #ordersList div {
+  margin-bottom: 6px;
+}
+
+#who {
+  margin-top: 10px;
+  font-weight: bold;
+}

@@ -1,0 +1,32 @@
+
+  orders:
+    build: ./services/orders
+    container_name: orders
+    ports:
+      - "3003:3003"
+    environment:
+      - PGHOST=postgres
+      - PGUSER=appuser
+      - PGPASSWORD=appuser
+      - PGDATABASE=mv100db
+      - PGPORT=5432
+      - JWT_SECRET=supersecretkey
+    depends_on:
+      - postgres
+      - kafka
+
+  payments:
+    build: ./services/payments
+    container_name: payments
+    ports:
+      - "3004:3004"
+    environment:
+      - PGHOST=postgres
+      - PGUSER=appuser
+      - PGPASSWORD=appuser
+      - PGDATABASE=mv100db
+      - PGPORT=5432
+      - JWT_SECRET=supersecretkey
+    depends_on:
+      - postgres
+      - kafka

@@ -1,0 +1,132 @@
+:root {
+  --bg1: #ffffff;
+  --bg2: #f4f7ff;
+  --accent: #7755ff;
+  --accent-2: #f22b91;
+  --text: #2a2a2a;
+  --muted: #666;
+  --glass: rgba(255, 255, 255, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  font-family: "Poppins", "Inter", sans-serif;
+  background: linear-gradient(135deg, #f7f9ff 0%, #ffffff 50%, #fef6ff 100%);
+  color: var(--text);
+  background-attachment: fixed;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 32px auto;
+  padding: 24px;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(15px);
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-radius: 14px;
+  margin: 10px auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+}
+
+.nav a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 500;
+  margin: 0 10px;
+}
+
+.nav .brand {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.2rem;
+}
+
+.nav .btn.small {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.btn {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.input {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  max-width: 360px;
+  font-size: 0.95rem;
+}
+
+.card {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.product-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.badge {
+  background: var(--accent);
+  color: white;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+}
+
+h1 {
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(0,0,0,0.05);
+}

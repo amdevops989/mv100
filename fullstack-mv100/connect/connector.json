@@ -1,0 +1,28 @@
+{
+  "name": "pg-auth-catalog-orders",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "dbz",
+    "database.password": "dbz",
+    "database.dbname": "mv100db",
+
+    "topic.prefix": "mv100db",
+
+    "plugin.name": "pgoutput",
+    "slot.name": "dbz_slot",
+    "publication.name": "dbz_pub",
+
+    "table.include.list": "public.users,public.orders,public.payments,public.emails,public.products",
+
+    "snapshot.mode": "initial",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false",
+
+    "decimal.handling.mode": "string"
+  }
+}

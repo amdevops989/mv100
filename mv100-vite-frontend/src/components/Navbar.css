@@ -1,0 +1,136 @@
+/* General */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+}
+
+/* Navbar container */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(90deg, #4f46e5 0%, #9333ea 100%);
+  color: white;
+  position: relative;
+  z-index: 1000;
+}
+
+/* Brand / Logo */
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  flex: 1;
+}
+
+/* Navbar links */
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* Links / buttons */
+.navbar-links a,
+.navbar-links button,
+.navbar-links span {
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+.navbar-links a:hover,
+.navbar-links button:hover,
+.navbar-links span:hover {
+  opacity: 0.85;
+}
+
+/* Cart icon always visible */
+.cart {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.cart:hover {
+  opacity: 0.85;
+}
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 1100;
+}
+
+/* DESKTOP - adjust spacing */
+.navbar-links a,
+.navbar-links button,
+.navbar-links span {
+  margin-right: 0.5rem;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  /* Brand always centered at top */
+  .navbar-brand {
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+  }
+
+  /* Cart always top-right */
+  .cart {
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    z-index: 1001;
+  }
+
+  /* Links slide down vertically */
+  .navbar-links {
+    flex-direction: column;
+    position: absolute;
+    top: 3.5rem;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #4f46e5 0%, #9333ea 100%);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding: 0;
+  }
+  .navbar-links.open {
+    max-height: 500px;
+    padding: 1rem 0;
+  }
+
+  /* Center links */
+  .navbar-links a,
+  .navbar-links button,
+  .navbar-links span {
+    width: 90%;
+    margin: 0.2rem auto;
+    text-align: center;
+  }
+}
