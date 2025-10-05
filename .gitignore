@@ -1,0 +1,94 @@
+# ==========================
+# Node.js
+# ==========================
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Dependency locks
+package-lock.json
+yarn.lock
+.pnpm-lock.yaml
+
+# Build output
+dist/
+build/
+coverage/
+.tmp/
+.cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# ==========================
+# Terraform
+# ==========================
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+
+# ==========================
+# AWS / Cloud
+# ==========================
+.aws/
+*.pem
+*.key
+*.crt
+
+# ==========================
+# Docker
+# ==========================
+# Ignore Docker image layers and overrides
+docker-compose.override.yml
+docker-compose.override.yaml
+Dockerfile*
+**/Dockerfile*
+*.dockerignore
+*.log
+docker-compose.*.yml
+docker-compose.*.yaml
+docker-compose.override.*
+
+# ==========================
+# IDE / Editor
+# ==========================
+# VSCode
+.vscode/
+.history/
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+.nfs*
+
+# ==========================
+# Others / Temp
+# ==========================
+*.swp
+*.swo
+*.bak
+*.tmp
