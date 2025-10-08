@@ -1,73 +1,84 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const { Pool } = require('pg');
-const jwt = require('jsonwebtoken');
-const { Kafka } = require('kafkajs');
+// backend/services/orders/index.js
+require("dotenv").config();
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const { Pool } = require("pg");
+const jwt = require("jsonwebtoken");
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
-app.use(cors()); // <-- Enable CORS
 
+// ✅ PostgreSQL connection
 const pool = new Pool({
-  user: process.env.PGUSER || 'appuser',
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'mv100db',
-  password: process.env.PGPASSWORD || 'appuser',
+  user: process.env.PGUSER || "appuser",
+  host: process.env.PGHOST || "localhost",
+  database: process.env.PGDATABASE || "mv100db",
+  password: process.env.PGPASSWORD || "appuser",
   port: process.env.PGPORT || 5432,
 });
 
-const kafka = new Kafka({ clientId: 'orders-service', brokers: ['localhost:9094'] });
-const producer = kafka.producer();
-
-function auth(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+// ✅ JWT auth middleware
+const auth = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No token" });
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecretkey");
     req.userId = decoded.userId;
     next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
+  } catch (err) {
+    console.error("❌ Invalid token:", err.message);
+    return res.status(401).json({ error: "Invalid token" });
   }
-}
+};
 
-async function start() {
-  await producer.connect();
+// ✅ Fetch orders for current user
+app.get("/orders", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    console.log(`📦 Fetching orders for userId: ${req.userId}`);
+    const result = await client.query(
+      "SELECT * FROM orders WHERE user_id = $1 ORDER BY id DESC",
+      [req.userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error fetching orders:", err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
 
-  app.post('/orders', auth, async (req, res) => {
-    const { amount } = req.body;
-    if (!amount) return res.status(400).json({ error: 'amount required' });
+// ✅ Mark order as paid (Stripe webhook or frontend)
+app.put("/orders/:id/paid", async (req, res) => {
+  const orderId = req.params.id;
+  const { paymentIntent } = req.body;
 
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'INSERT INTO orders (user_id, amount, status) VALUES ($1,$2,$3) RETURNING *',
-        [req.userId, amount, 'pending']
-      );
-      const order = result.rows[0];
-      await producer.send({
-        topic: 'mv100db.public.orders',
-        messages: [{ key: String(order.id), value: JSON.stringify(order) }]
-      });
-      res.json(order);
-    } finally {
-      client.release();
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      "UPDATE orders SET status = $1, payment_intent = $2 WHERE id = $3 RETURNING *",
+      ["paid", paymentIntent || null, orderId]
+    );
+
+    if (result.rowCount === 0) {
+      console.warn(`⚠️ Order ${orderId} not found`);
+      return res.status(404).json({ error: "Order not found" });
     }
-  });
 
-  app.get('/orders', auth, async (req, res) => {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM orders WHERE user_id=$1', [req.userId]);
-      res.json(result.rows);
-    } finally {
-      client.release();
-    }
-  });
+    console.log(`✅ Order ${orderId} marked as paid`);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("❌ Error updating order status:", err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
 
-  const port = process.env.PORT || 3003;
-  app.listen(port, () => console.log(`Orders service listening on ${port}`));
-}
+app.get("/", (_req, res) => res.send("📦 Orders service running ✅"));
 
-start().catch(err => { console.error(err); process.exit(1); });
+const PORT = process.env.PORT || 3003;
+app.listen(PORT, () => console.log(`📦 Orders service running on port ${PORT}`));

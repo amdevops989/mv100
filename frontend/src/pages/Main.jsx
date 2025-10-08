@@ -10,6 +10,10 @@ import Login from "./Login";
 import Signup from "./Signup";
 import Toast from "../components/Toast";
 
+// ✅ Add these imports
+import Success from "./Success";
+import Cancel from "./Cancel";
+
 export default function Main() {
   return (
     <AuthProvider>
@@ -23,6 +27,10 @@ export default function Main() {
               <Route path="/orders" element={<Orders />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+
+              {/* ✅ Add these routes */}
+              <Route path="/success" element={<Success />} />
+              <Route path="/cancel" element={<Cancel />} />
             </Routes>
           </div>
           <Toast message={null} />
