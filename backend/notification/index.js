@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config(); // Load env vars
 const { Kafka, logLevel } = require('kafkajs');
 const pino = require('pino');
 
@@ -10,16 +10,18 @@ import('chalk').then((module) => {
 
 const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
-// ✅ Kafka setup
+// Kafka setup
 const kafka = new Kafka({
-  clientId: 'notification-service',
+  clientId: process.env.KAFKA_CLIENT_ID || 'notification-service',
   brokers: (process.env.KAFKA_BROKERS || 'localhost:9094').split(','),
   logLevel: logLevel.NOTHING,
 });
 
-const consumer = kafka.consumer({ groupId: 'notification-group' });
+const consumer = kafka.consumer({
+  groupId: process.env.KAFKA_GROUP_ID || 'notification-group',
+});
 
-// Simulated "send email" function
+// Simulated email sender
 async function sendMailSimulated(to, subject, html) {
   console.log(chalk.blue(`\n📧 [Simulated Email]`));
   console.log(chalk.white(`To: ${to}`));
@@ -34,9 +36,11 @@ async function start() {
     await consumer.connect();
     console.log(chalk.cyan('🔌 Notification consumer connected to Kafka\n'));
 
-    await consumer.subscribe({ topic: 'mv100db.public.users', fromBeginning: true });
-    await consumer.subscribe({ topic: 'mv100db.public.orders', fromBeginning: true });
-    await consumer.subscribe({ topic: 'mv100db.public.payments', fromBeginning: true });
+    // Subscribe to topics (from env or default)
+    const topics = (process.env.KAFKA_TOPICS || 'mv100db.public.users,mv100db.public.orders,mv100db.public.payments').split(',');
+    for (const topic of topics) {
+      await consumer.subscribe({ topic, fromBeginning: true });
+    }
 
     await consumer.run({
       eachMessage: async ({ topic, message }) => {
@@ -64,7 +68,6 @@ async function start() {
               <h2>🛍️ Thank you for your order!</h2>
               <p>Your order <strong>#${after.id}</strong> totaling <strong>${after.amount} USD</strong> has been received.</p>
               <p>Status: <strong>${after.status}</strong></p>
-              <p>We’ll notify you when payment is completed.</p>
               <br/>
               <small>MV100 Store</small>
             `
@@ -88,7 +91,7 @@ async function start() {
           );
         }
 
-        // Handle Updates (optional)
+        // Order updated
         else if (topic.includes('orders') && op === 'u') {
           console.log(chalk.magenta.bold(`🔄 Order Updated:`), chalk.white(`#${after.id} → ${after.status}`));
         }

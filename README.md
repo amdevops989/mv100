@@ -1,6 +1,12 @@
 # mv100
 
 
+curl -i -X POST -H "Accept:application/json" \                     
+     -H "Content-Type:application/json" \
+     localhost:8083/connectors/ \
+     -d @pg-auth-catalog-orders.json 
+
+
 how to list kafka topics : 
 docker exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
 

@@ -1,6 +1,8 @@
+require('dotenv').config(); // <-- Load .env variables
+
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // <-- added
+const cors = require('cors');
 const Redis = require('ioredis');
 const { Pool } = require('pg');
 const { Kafka } = require('kafkajs');
@@ -8,28 +10,35 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-app.use(cors()); // <-- enable CORS globally
+app.use(cors());
 app.use(bodyParser.json());
 
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+// Redis setup
+const redis = new Redis(process.env.REDIS_URL);
 
+// PostgreSQL setup
 const pool = new Pool({
-  user: process.env.PGUSER || 'appuser',
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'mv100db',
-  password: process.env.PGPASSWORD || 'appuser',
-  port: process.env.PGPORT || 5432,
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: Number(process.env.PGPORT),
 });
 
-const kafka = new Kafka({ clientId: 'cart-service', brokers: ['localhost:9094'] });
+// Kafka setup
+const kafka = new Kafka({
+  clientId: process.env.KAFKA_CLIENT_ID,
+  brokers: process.env.KAFKA_BROKERS.split(','),
+});
 const producer = kafka.producer();
 
+// Auth middleware
 function authMiddleware(req, res, next) {
   const auth = req.headers['authorization'];
   if (!auth) return res.status(401).json({ error: 'No token' });
   const token = auth.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretkey');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
@@ -67,6 +76,7 @@ async function start() {
         client.release();
       }
     }
+
     const client = await pool.connect();
     try {
       const r = await client.query(
@@ -75,7 +85,7 @@ async function start() {
       );
       const order = r.rows[0];
       await producer.send({
-        topic: 'mv100db.public.orders',
+        topic: process.env.KAFKA_TOPIC,
         messages: [{ key: String(order.id), value: JSON.stringify(order) }]
       });
       await redis.del(`cart:${userId}`);
@@ -86,7 +96,10 @@ async function start() {
   });
 
   const port = process.env.PORT || 3002;
-  app.listen(port, () => console.log(`Cart service listening on ${port}`));
+  app.listen(port, () => console.log(`Cart service listening on port ${port}`));
 }
 
-start().catch(err => { console.error(err); process.exit(1); });
+start().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

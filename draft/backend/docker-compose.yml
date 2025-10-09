@@ -18,8 +18,6 @@ services:
       - "9092:9092"
       - "9094:9094"
       - "9093:9093"
-    volumes:
-      - ./kafka-logs:/bitnami/kafka
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -41,8 +39,7 @@ services:
       POSTGRES_DB: mv100db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     command:
       - postgres
       - -c
@@ -54,8 +51,8 @@ services:
       - -c
       - max_wal_size=1GB
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
-      - ./sql/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -86,8 +83,6 @@ services:
       VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       KEY_CONVERTER_SCHEMAS_ENABLE: "false"
       VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-    volumes:
-      - ./connect-data:/kafka/connect
 
   redis:
     image: redis:7
@@ -96,89 +91,76 @@ services:
       - "6379:6379"
     command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
     volumes:
-      - ./redisdata:/data
+      - redisdata:/data
 
-  # ===== Backend Services =====
   auth:
     build:
-      context: ./backend/auth
-      dockerfile: Dockerfile
+      context: ./services/auth
     container_name: auth
-    env_file:
-      - ./backend/auth/.env.staging
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - JWT_SECRET=supersecretkey
+      - REDIS_URL=redis://redis:6379
+      - PGUSER=appuser
+      - PGPASSWORD=appuser
+      - PGHOST=postgres
+      - PGDATABASE=mv100db
+      - PGPORT=5432
     depends_on:
       - postgres
       - redis
       - kafka
-    ports:
-      - "3001:3001"
-
-  cart:
-    build:
-      context: ./backend/cart
-      dockerfile: Dockerfile
-    container_name: cart
-    env_file:
-      - ./backend/cart/.env.staging
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-    ports:
-      - "3002:3002"
 
   catalog:
     build:
-      context: ./backend/catalog
-      dockerfile: Dockerfile
+      context: ./services/catalog
     container_name: catalog
-    env_file:
-      - ./backend/catalog/.env.staging
-    depends_on:
-      - postgres
-      - redis
-      - kafka
     ports:
       - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PGUSER=appuser
+      - PGPASSWORD=appuser
+      - PGHOST=postgres
+      - PGDATABASE=mv100db
+      - PGPORT=5432
+    depends_on:
+      - postgres
+      - kafka
 
-  orders:
+  cart:
     build:
-      context: ./backend/orders
-      dockerfile: Dockerfile
-    container_name: orders
-    env_file:
-      - ./backend/orders/.env.staging
+      context: ./services/cart
+    container_name: cart
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PGUSER=appuser
+      - PGPASSWORD=appuser
+      - PGHOST=postgres
+      - PGDATABASE=mv100db
+      - PGPORT=5432
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=supersecretkey
     depends_on:
       - postgres
       - redis
       - kafka
-    ports:
-      - "3003:3003"
 
-  payments:
+  frontend:
     build:
-      context: ./backend/payments
-      dockerfile: Dockerfile
-    container_name: payments
-    env_file:
-      - ./backend/payments/.env.staging
-    depends_on:
-      - postgres
-      - redis
-      - kafka
+      context: ./frontend
+    container_name: frontend
     ports:
-      - "3004:3004"
+      - "8081:80"
+    depends_on:
+      - auth
+      - catalog
+      - cart
 
-  notification:
-    build:
-      context: ./backend/notification
-      dockerfile: Dockerfile
-    container_name: notification
-    env_file:
-      - ./backend/notification/.env.staging
-    depends_on:
-      - postgres
-      - redis
-      - kafka
-    ports:
-      - "3005:3005"
+volumes:
+  pgdata:
+  redisdata:
