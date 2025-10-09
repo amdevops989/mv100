@@ -16,13 +16,18 @@
 
     "table.include.list": "public.users,public.orders,public.payments,public.emails,public.products",
 
-    "snapshot.mode": "initial",
+    "snapshot.mode": "always",            
+    "slot.drop.on.stop": "false",         
+    "max.batch.size": "2048",             
+    "max.queue.size": "8192",
 
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "key.converter.schemas.enable": "false",
     "value.converter.schemas.enable": "false",
 
-    "decimal.handling.mode": "string"
+    "decimal.handling.mode": "string",
+    "tombstones.on.delete": "true",       
+    "heartbeat.interval.ms": "10000"      
   }
 }

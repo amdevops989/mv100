@@ -20,7 +20,7 @@ $$;
 
 \connect mv100db
 
--- Create tables if not exist
+-- Users table
 CREATE TABLE IF NOT EXISTS public.users (
   id SERIAL PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
@@ -28,40 +28,38 @@ CREATE TABLE IF NOT EXISTS public.users (
   created_at TIMESTAMP DEFAULT now()
 );
 
+-- Products table with image_url
 CREATE TABLE IF NOT EXISTS public.products (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
   price NUMERIC(10,2) NOT NULL,
+  image_url TEXT,
   created_at TIMESTAMP DEFAULT now()
 );
 
+-- Orders table
 CREATE TABLE IF NOT EXISTS public.orders (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES public.users(id),
   amount NUMERIC(10,2) NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
+  payment_intent TEXT,
   created_at TIMESTAMP DEFAULT now()
 );
 
--- CREATE TABLE IF NOT EXISTS public.payments (
---   id SERIAL PRIMARY KEY,
---   order_id INT NOT NULL REFERENCES public.orders(id),
---   amount NUMERIC(10,2) NOT NULL,
---   status TEXT NOT NULL DEFAULT 'initiated',
---   created_at TIMESTAMP DEFAULT now()
--- );
-
+-- Payments table with payment_intent
 CREATE TABLE IF NOT EXISTS public.payments (
   id SERIAL PRIMARY KEY,
   order_id INTEGER REFERENCES orders(id),
   amount NUMERIC(10,2),
   status VARCHAR(50),
   provider VARCHAR(50),
+  payment_intent TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-
+-- Emails table
 CREATE TABLE IF NOT EXISTS public.emails (
   id SERIAL PRIMARY KEY,
   recipient TEXT NOT NULL,

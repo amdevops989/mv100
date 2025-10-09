@@ -1,4 +1,3 @@
-// backend/services/orders/index.js
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -51,27 +50,59 @@ app.get("/orders", auth, async (req, res) => {
   }
 });
 
+// ✅ Create new order
+app.post("/orders", auth, async (req, res) => {
+  const { amount } = req.body;
+  if (!amount) return res.status(400).json({ error: "Amount is required" });
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      "INSERT INTO orders (user_id, amount, status) VALUES ($1, $2, 'pending') RETURNING *",
+      [req.userId, amount]
+    );
+    console.log(`🆕 New order created: #${result.rows[0].id} for user ${req.userId}`);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("❌ Error creating order:", err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // ✅ Mark order as paid (Stripe webhook or frontend)
+// Fully CDC-ready: updates orders + inserts a payment row
 app.put("/orders/:id/paid", async (req, res) => {
   const orderId = req.params.id;
   const { paymentIntent } = req.body;
 
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      "UPDATE orders SET status = $1, payment_intent = $2 WHERE id = $3 RETURNING *",
-      ["paid", paymentIntent || null, orderId]
+    // 1️⃣ Update order status
+    const orderResult = await client.query(
+      "UPDATE orders SET status = $1 WHERE id = $2 RETURNING *",
+      ["paid", orderId]
     );
 
-    if (result.rowCount === 0) {
+    if (orderResult.rowCount === 0) {
       console.warn(`⚠️ Order ${orderId} not found`);
       return res.status(404).json({ error: "Order not found" });
     }
+    const order = orderResult.rows[0];
+    console.log(`✅ Order #${order.id} marked as paid`);
 
-    console.log(`✅ Order ${orderId} marked as paid`);
-    res.json(result.rows[0]);
+    // 2️⃣ Insert payment row (Debezium will capture this)
+    const paymentResult = await client.query(
+      "INSERT INTO payments (order_id, amount, status, payment_intent) VALUES ($1, $2, 'paid', $3) RETURNING *",
+      [order.id, order.amount, paymentIntent || null]
+    );
+
+    console.log(`💳 Payment recorded: #${paymentResult.rows[0].id} for order #${order.id}`);
+
+    res.json({ order, payment: paymentResult.rows[0] });
   } catch (err) {
-    console.error("❌ Error updating order status:", err.message);
+    console.error("❌ Error processing payment:", err.message);
     res.status(500).json({ error: err.message });
   } finally {
     client.release();
