@@ -13,7 +13,7 @@ const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 // Kafka setup
 const kafka = new Kafka({
   clientId: process.env.KAFKA_CLIENT_ID || 'notification-service',
-  brokers: (process.env.KAFKA_BROKERS || 'localhost:9094').split(','),
+  brokers: (process.env.KAFKA_BROKERS || 'kafka:9092').split(','),
   logLevel: logLevel.NOTHING,
 });
 
@@ -31,13 +31,32 @@ async function sendMailSimulated(to, subject, html) {
   console.log(chalk.gray(`----------------------------------------\n`));
 }
 
+// Wait for topics to exist
+async function waitForTopics(topics, kafkaAdmin, interval = 3000, retries = 20) {
+  for (let i = 0; i < retries; i++) {
+    const existingTopics = await kafkaAdmin.listTopics();
+    const missing = topics.filter((t) => !existingTopics.includes(t));
+    if (missing.length === 0) return;
+    console.log(chalk.yellow(`Topics missing: ${missing.join(', ')}. Retrying in ${interval / 1000}s...`));
+    await new Promise((r) => setTimeout(r, interval));
+  }
+  throw new Error(`Topics not found after ${retries} retries: ${topics.join(', ')}`);
+}
+
 async function start() {
   try {
     await consumer.connect();
     console.log(chalk.cyan('🔌 Notification consumer connected to Kafka\n'));
 
-    // Subscribe to topics (from env or default)
-    const topics = (process.env.KAFKA_TOPICS || 'mv100db.public.users,mv100db.public.orders,mv100db.public.payments').split(',');
+    const topics = (process.env.KAFKA_TOPICS || 'mv100db.public.users,mv100db.public.orders,mv100db.public.payments')
+      .split(',');
+
+    const admin = kafka.admin();
+    await admin.connect();
+    await waitForTopics(topics, admin);
+    await admin.disconnect();
+
+    // Subscribe to topics
     for (const topic of topics) {
       await consumer.subscribe({ topic, fromBeginning: true });
     }
@@ -64,13 +83,10 @@ async function start() {
           await sendMailSimulated(
             after.email || 'customer@example.com',
             `Your order #${after.id} has been received!`,
-            `
-              <h2>🛍️ Thank you for your order!</h2>
-              <p>Your order <strong>#${after.id}</strong> totaling <strong>${after.amount} USD</strong> has been received.</p>
-              <p>Status: <strong>${after.status}</strong></p>
-              <br/>
-              <small>MV100 Store</small>
-            `
+            `<h2>🛍️ Thank you for your order!</h2>
+             <p>Your order <strong>#${after.id}</strong> totaling <strong>${after.amount} USD</strong> has been received.</p>
+             <p>Status: <strong>${after.status}</strong></p>
+             <br/><small>MV100 Store</small>`
           );
         }
 
@@ -81,13 +97,10 @@ async function start() {
           await sendMailSimulated(
             after.email || 'customer@example.com',
             `Payment received for your order #${after.order_id}`,
-            `
-              <h2>💳 Payment Confirmation</h2>
-              <p>Your payment for order <strong>#${after.order_id}</strong> of <strong>${after.amount} USD</strong> has been successfully processed.</p>
-              <p>Status: <strong>${after.status}</strong></p>
-              <br/>
-              <small>MV100 Store</small>
-            `
+            `<h2>💳 Payment Confirmation</h2>
+             <p>Your payment for order <strong>#${after.order_id}</strong> of <strong>${after.amount} USD</strong> has been successfully processed.</p>
+             <p>Status: <strong>${after.status}</strong></p>
+             <br/><small>MV100 Store</small>`
           );
         }
 
@@ -96,7 +109,6 @@ async function start() {
           console.log(chalk.magenta.bold(`🔄 Order Updated:`), chalk.white(`#${after.id} → ${after.status}`));
         }
 
-        // Fallback
         else {
           console.log(chalk.gray(`⚙️ Unhandled event. op=${op || 'unknown'}`));
         }

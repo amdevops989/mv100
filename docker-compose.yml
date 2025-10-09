@@ -18,14 +18,18 @@ services:
       - "9092:9092"
       - "9094:9094"
       - "9093:9093"
-    volumes:
-      - ./kafka-logs:/bitnami/kafka
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      interval: 5s
+      retries: 12
+      start_period: 5s
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
     depends_on:
-      - kafka
+    - kafka
+    - postgres
     ports:
       - "8080:8080"
     environment:
@@ -56,12 +60,18 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
       - ./sql/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 10
+      start_period: 5s
 
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -72,8 +82,8 @@ services:
     image: debezium/connect:2.7.1.Final
     container_name: connect
     depends_on:
-      - kafka
-      - postgres
+    - kafka
+    - postgres
     ports:
       - "8083:8083"
     environment:
@@ -86,9 +96,18 @@ services:
       VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       KEY_CONVERTER_SCHEMAS_ENABLE: "false"
       VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-    volumes:
-      - ./connect-data:/kafka/connect
-
+    # volumes:
+    # - ./connect-data:/kafka/connect
+    # - ./connectors:/connectors
+    # command:                                automate curl -i -X POST -H "Accept:application/json" \
+                                                      #  -H "Content-Type:application/json" \
+                                                      #  localhost:8083/connectors/ \
+                                                      #  -d @pg-auth-catalog-orders.json
+    #   - bash
+    #   - -c
+    #   - |
+    #     # Start Connect
+    #     /kafka/connect/bin/connect-standalone.sh /kafka/connect/etc/kafka/connect-standalone.properties /connectors/pg-auth-catalog-orders.json
   redis:
     image: redis:7
     container_name: redis
@@ -97,6 +116,11 @@ services:
     command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
     volumes:
       - ./redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+      start_period: 5s
 
   # ===== Backend Services =====
   auth:
@@ -107,11 +131,11 @@ services:
     env_file:
       - ./backend/auth/.env.staging
     depends_on:
-      - postgres
-      - redis
-      - kafka
+    - kafka
+    - postgres
+    - redis
     ports:
-      - "3001:3001"
+      - "3000:3000"
 
   cart:
     build:
@@ -121,9 +145,9 @@ services:
     env_file:
       - ./backend/cart/.env.staging
     depends_on:
-      - postgres
-      - redis
-      - kafka
+    - kafka
+    - postgres
+    - redis
     ports:
       - "3002:3002"
 
@@ -135,9 +159,9 @@ services:
     env_file:
       - ./backend/catalog/.env.staging
     depends_on:
-      - postgres
-      - redis
-      - kafka
+    - kafka
+    - postgres
+    - redis
     ports:
       - "3001:3001"
 
@@ -149,9 +173,9 @@ services:
     env_file:
       - ./backend/orders/.env.staging
     depends_on:
-      - postgres
-      - redis
-      - kafka
+    - kafka
+    - postgres
+    - redis
     ports:
       - "3003:3003"
 
@@ -163,9 +187,9 @@ services:
     env_file:
       - ./backend/payments/.env.staging
     depends_on:
-      - postgres
-      - redis
-      - kafka
+    - kafka
+    - postgres
+    - redis
     ports:
       - "3004:3004"
 
@@ -177,8 +201,8 @@ services:
     env_file:
       - ./backend/notification/.env.staging
     depends_on:
-      - postgres
-      - redis
-      - kafka
+    - kafka
+    - postgres
+    - redis
     ports:
       - "3005:3005"
