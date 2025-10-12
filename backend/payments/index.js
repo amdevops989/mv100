@@ -12,6 +12,12 @@ app.use(express.json());
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
+// Environment variables
+const ORDERS_SERVICE_URL = process.env.ORDERS_SERVICE_URL; // e.g. http://orders:3003
+const SUCCESS_URL = process.env.SUCCESS_URL;               // e.g. http://frontend:80/success
+const CANCEL_URL = process.env.CANCEL_URL;                 // e.g. http://frontend:80/cancel
+const PORT = process.env.PORT || 3004;
+
 // ✅ Stripe webhook raw body (must come before JSON parser)
 app.post(
   "/payments/webhook",
@@ -19,6 +25,7 @@ app.post(
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
     let event;
+
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
@@ -41,7 +48,7 @@ app.post(
 
       try {
         await axios.put(
-          `http://localhost:3003/orders/${orderId}/paid`,
+          `${ORDERS_SERVICE_URL}/${orderId}/paid`,
           { paymentIntent }
         );
         console.log(`🟢 Order ${orderId} updated in Orders service`);
@@ -76,8 +83,8 @@ app.post("/payments/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `http://localhost:5173/success?orderId=${orderId}`,
-      cancel_url: "http://localhost:5173/cancel",
+      success_url: `${SUCCESS_URL}?orderId=${orderId}`,
+      cancel_url: CANCEL_URL,
       metadata: { orderId },
     });
 
@@ -91,5 +98,4 @@ app.post("/payments/create-checkout-session", async (req, res) => {
 
 app.get("/", (_req, res) => res.send("💳 Payments service running ✅"));
 
-const PORT = process.env.PORT || 3004;
 app.listen(PORT, () => console.log(`💳 Payments service listening on port ${PORT}`));

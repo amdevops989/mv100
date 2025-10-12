@@ -1,0 +1,33 @@
+{
+  "title": "Orders Paid (from Loki Logs)",
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Orders Paid (1h)",
+      "targets": [
+        { "expr": "sum(count_over_time({service=\"orders\"} |= \"marked as paid\" [1h]))" }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Orders Paid Over Time",
+      "targets": [
+        { "expr": "count_over_time({service=\"orders\"} |= \"marked as paid\" [1m])", "legendFormat": "Orders Paid" }
+      ],
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 9 },
+      "options": {
+        "showPoints": "never",
+        "legend": { "showLegend": true, "displayMode": "table" }
+      }
+    }
+  ]
+}

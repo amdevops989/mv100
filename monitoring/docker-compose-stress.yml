@@ -1,0 +1,50 @@
+# version: '3.8'
+
+# services:
+#   stress-cpu:
+#     image: polinux/stress-ng
+#     container_name: stress-cpu
+#     command: --cpu 4 --timeout 60s
+#     restart: on-failure
+
+#   stress-mem:
+#     image: polinux/stress-ng
+#     container_name: stress-mem
+#     command: --vm 2 --vm-bytes 512M --timeout 60s
+#     restart: on-failure
+
+#   stress-io:
+#     image: polinux/stress-ng
+#     container_name: stress-io
+#     command: --io 2 --timeout 60s
+#     restart: on-failure
+
+
+
+version: '3.8'
+
+services:
+  stress-cpu-light:
+    image: polinux/stress-ng
+    container_name: stress-cpu-light
+    command: --cpu 1 --timeout 60s
+    restart: "no"
+
+  stress-mem-light:
+    image: polinux/stress-ng
+    container_name: stress-mem-light
+    command: --vm 1 --vm-bytes 2G --timeout 60s
+    restart: "no"
+
+  stress-io-light:
+    image: polinux/stress-ng
+    container_name: stress-io-light
+    command: --io 1 --timeout 60s
+    restart: "no"
+
+  stress-combo-light:
+    image: polinux/stress-ng
+    container_name: stress-combo-light
+    command: --cpu 1 --vm 1 --vm-bytes 2G --io 1 --timeout 60s
+    restart: "no"
+

@@ -1,0 +1,78 @@
+version: '3.8'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    # networks:
+    #   - mv100_default
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3006:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    # networks:
+    #   - mv100_default
+    restart: unless-stopped
+
+  loki:
+      image: grafana/loki:2.9.0
+      container_name: loki
+      ports:
+        - "3100:3100"
+      volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      command: -config.file=/etc/loki/local-config.yaml
+      # networks:
+      #   - mv100_default
+      restart: unless-stopped
+
+  promtail:
+      image: grafana/promtail:2.9.0
+      container_name: promtail
+      depends_on:
+        - loki
+      volumes:
+        - /var/lib/docker/containers:/var/lib/docker/containers:ro
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+      command: -config.file=/etc/promtail/config.yml
+      # networks:
+      #   - mv100_default
+      restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8089:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    # networks:
+    #   - mv100_default
+    restart: unless-stopped
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+
