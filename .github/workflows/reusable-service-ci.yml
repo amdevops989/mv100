@@ -31,6 +31,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Debug step: print current working directory
+      - name: Show working directory
+        run: |
+          echo "Current working directory:"
+          pwd
+          echo "Contents of this directory:"
+          ls -la
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
