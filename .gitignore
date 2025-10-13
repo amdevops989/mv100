@@ -59,8 +59,8 @@ terraform.tfvars.json
 # Ignore Docker image layers and overrides
 docker-compose.override.yml
 docker-compose.override.yaml
-Dockerfile*
-**/Dockerfile*
+# Dockerfile*
+# **/Dockerfile*
 *.dockerignore
 *.log
 docker-compose.*.yml
