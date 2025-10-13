@@ -1,7 +1,3 @@
-
-Invalid workflow file: .github/workflows/ci.yml#L1
-(Line: 69, Col: 9): Unexpected value 'secrets'name: "Monorepo CI — Build & Push Changed Services"
-
 on:
   push:
     branches:

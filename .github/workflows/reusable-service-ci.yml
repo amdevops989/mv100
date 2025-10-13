@@ -12,7 +12,7 @@ on:
     secrets:
       DOCKERHUB_USERNAME:
         required: true
-      DOCKERHUB_TOKEN:
+      DOCKERHUB_PASSWORD:
         required: true
 
 jobs:
