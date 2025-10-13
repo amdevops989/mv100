@@ -19,11 +19,11 @@ jobs:
   build_and_push:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Debug: pwd & service folder
+      # 2️⃣ Debug service folder
       - name: Debug service folder
         run: |
           echo "Current working directory: $(pwd)"
@@ -41,7 +41,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 5️⃣ Build & push with multiple tags
+      # 5️⃣ Set Docker tags
+      - name: Set Docker tags
+        id: docker_tags
+        run: |
+          # Commit SHA
+          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
+          # Branch name (remove refs/heads/)
+          if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+            BRANCH="${GITHUB_REF#refs/heads/}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            BRANCH="${GITHUB_REF#refs/tags/}"
+          else
+            BRANCH="unknown"
+          fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      # 6️⃣ Build & push Docker image with multiple tags
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -50,5 +67,5 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mv100-${{ inputs.service }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/mv100-${{ inputs.service }}:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/mv100-${{ inputs.service }}:${{ github.ref_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/mv100-${{ inputs.service }}:${{ steps.docker_tags.outputs.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/mv100-${{ inputs.service }}:${{ steps.docker_tags.outputs.branch }}
