@@ -34,7 +34,7 @@ jobs:
       # Debug step: print current working directory
       - name: Show working directory
         run: |
-          echo "Current working directory:"
+          echo "*****************************Current working directory:***********************************"
           pwd
           echo "Contents of this directory:"
           ls -la
