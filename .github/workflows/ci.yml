@@ -45,13 +45,11 @@ jobs:
           fi
           echo "Changed services: $CHANGED"
 
-          # Trim whitespace and convert to JSON array
-          JSON_ARRAY=$(echo "$CHANGED" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | xargs -n1 | jq -R . | jq -s .)
+          # Convert to JSON array safely (no extra spaces)
+          JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s .)
 
-          # Safely set output
-          cat <<EOF >> $GITHUB_OUTPUT
-          services=$JSON_ARRAY
-          EOF
+          # Set output safely
+          echo "services=${JSON_ARRAY}" >> $GITHUB_OUTPUT
 
   build_and_push:
     needs: detect_changes
