@@ -39,14 +39,16 @@ jobs:
           fi
 
           # Detect changed services
-          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | tr '\n' ' ')
+          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u)
           if [ -z "$CHANGED" ]; then
             CHANGED="$ALL_SERVICES"
           fi
           echo "Changed services: $CHANGED"
 
-          # Convert to JSON array for matrix
-          JSON_ARRAY=$(echo $CHANGED | xargs -n1 | jq -R . | jq -s .)
+          # Convert to JSON array for matrix (trim spaces)
+          JSON_ARRAY=$(echo "$CHANGED" | tr -d '[:space:]' | tr ',' '\n' | xargs -n1 echo | jq -R . | jq -s .)
+
+          # Set output properly
           echo "services=$JSON_ARRAY" >> $GITHUB_OUTPUT
 
   build_and_push:
