@@ -45,11 +45,13 @@ jobs:
           fi
           echo "Changed services: $CHANGED"
 
-          # Convert to JSON array for matrix (trim spaces)
-          JSON_ARRAY=$(echo "$CHANGED" | tr -d '[:space:]' | tr ',' '\n' | xargs -n1 echo | jq -R . | jq -s .)
+          # Trim whitespace and convert to JSON array
+          JSON_ARRAY=$(echo "$CHANGED" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | xargs -n1 | jq -R . | jq -s .)
 
-          # Set output properly
-          echo "services=$JSON_ARRAY" >> $GITHUB_OUTPUT
+          # Safely set output using here-document
+          cat <<EOF >> $GITHUB_OUTPUT
+            services=$JSON_ARRAY
+           EOF
 
   build_and_push:
     needs: detect_changes
