@@ -25,7 +25,6 @@ jobs:
       - name: Detect changed backend services
         id: detect
         run: |
-          # list all service directories
           ALL_SERVICES=$(ls -1 backend)
           echo "All services: $ALL_SERVICES"
 
@@ -37,28 +36,25 @@ jobs:
             HEAD_SHA=HEAD
           fi
 
-          echo "Comparing changes between $BASE_SHA and $HEAD_SHA"
-
-          # detect which top-level backend folders changed
           CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | tr '\n' ' ')
           if [ -z "$CHANGED" ]; then
             CHANGED="$ALL_SERVICES"
-            echo "No specific changes detected — running all services."
           fi
           echo "Changed services: $CHANGED"
 
-          echo "services=$CHANGED" >> $GITHUB_OUTPUT
+          # Output as JSON array
+          JSON_ARRAY=$(echo $CHANGED | jq -R 'split(" ")')
+          echo "services=$JSON_ARRAY" >> $GITHUB_OUTPUT
 
   build_and_push:
     needs: detect_changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson('["' + replace(needs.detect_changes.outputs.services, ' ', '","') + '"]') }}
+        service: ${{ fromJson(needs.detect_changes.outputs.services) }}
     steps:
-      - name: Reuse CI for each service
+      - name: Call reusable workflow for each service
         uses: ./.github/workflows/reusable-service-ci.yml
         with:
           service: ${{ matrix.service }}
           path: backend/${{ matrix.service }}
-        secrets: inherit
