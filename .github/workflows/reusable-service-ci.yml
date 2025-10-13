@@ -17,14 +17,12 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
-      GITHUB_TOKEN:
-        required: true  # Needed to push Git tags
 
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Checkout repo (fetch all tags)
+      # 1️⃣ Checkout repository (fetch all tags)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -81,7 +79,7 @@ jobs:
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.semver }}
 
-      # 6️⃣ Push semantic version tag back to Git
+      # 6️⃣ Push Git tag back to repo (uses system GITHUB_TOKEN)
       - name: Push Git tag
         if: always()
         run: |
@@ -90,5 +88,3 @@ jobs:
 
           git tag -a ${{ steps.docker_tags.outputs.semver }} -m "CI: Auto tag ${{ steps.docker_tags.outputs.semver }}"
           git push origin ${{ steps.docker_tags.outputs.semver }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
