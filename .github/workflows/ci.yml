@@ -48,10 +48,10 @@ jobs:
           # Trim whitespace and convert to JSON array
           JSON_ARRAY=$(echo "$CHANGED" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | xargs -n1 | jq -R . | jq -s .)
 
-          # Safely set output using here-document
+          # Safely set output
           cat <<EOF >> $GITHUB_OUTPUT
-            services=$JSON_ARRAY
-           EOF
+          services=$JSON_ARRAY
+          EOF
 
   build_and_push:
     needs: detect_changes
