@@ -77,6 +77,6 @@ jobs:
           push: true
           tags: |
             ${{ inputs.docker_repo }}:latest
-            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.sha }}
+            # ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.sha }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.semver }}
