@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-      - "release/**"
       - "develop"
+      - "release/**"
     paths:
       - "backend/**"
   pull_request:
@@ -59,6 +59,7 @@ jobs:
     with:
       service: ${{ matrix.service }}
       path: backend/${{ matrix.service }}
+      docker_repo: devopsflow999/${{ matrix.service }}  # foreign repo
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
