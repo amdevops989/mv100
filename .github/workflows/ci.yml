@@ -1,0 +1,64 @@
+name: "Monorepo CI — Build & Push Changed Services"
+
+on:
+  push:
+    branches:
+      - main
+      - "release/**"
+    paths:
+      - "backend/**"
+  pull_request:
+    paths:
+      - "backend/**"
+
+jobs:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.services }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed backend services
+        id: detect
+        run: |
+          # list all service directories
+          ALL_SERVICES=$(ls -1 backend)
+          echo "All services: $ALL_SERVICES"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          else
+            BASE_SHA=$(git rev-parse HEAD~1)
+            HEAD_SHA=HEAD
+          fi
+
+          echo "Comparing changes between $BASE_SHA and $HEAD_SHA"
+
+          # detect which top-level backend folders changed
+          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | tr '\n' ' ')
+          if [ -z "$CHANGED" ]; then
+            CHANGED="$ALL_SERVICES"
+            echo "No specific changes detected — running all services."
+          fi
+          echo "Changed services: $CHANGED"
+
+          echo "services=$CHANGED" >> $GITHUB_OUTPUT
+
+  build_and_push:
+    needs: detect_changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson('["' + replace(needs.detect_changes.outputs.services, ' ', '","') + '"]') }}
+    steps:
+      - name: Reuse CI for each service
+        uses: ./.github/workflows/reusable-service-ci.yml
+        with:
+          service: ${{ matrix.service }}
+          path: backend/${{ matrix.service }}
+        secrets: inherit

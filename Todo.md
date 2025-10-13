@@ -12,5 +12,14 @@ enhance the catalog with images and descriptions
 
 ok 
 
-## minikube 
+## monitoring  
+
+within prom grafana and loki 
+elk
+
+## https  : lets encrypt 
+
+
+
+
 
