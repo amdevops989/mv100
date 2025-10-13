@@ -25,9 +25,11 @@ jobs:
       - name: Detect changed backend services
         id: detect
         run: |
+          # List all backend top-level folders
           ALL_SERVICES=$(ls -1 backend)
           echo "All services: $ALL_SERVICES"
 
+          # Determine base and head SHAs
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
@@ -36,14 +38,15 @@ jobs:
             HEAD_SHA=HEAD
           fi
 
+          # Detect changed services
           CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | tr '\n' ' ')
           if [ -z "$CHANGED" ]; then
             CHANGED="$ALL_SERVICES"
           fi
           echo "Changed services: $CHANGED"
 
-          # Output as JSON array
-          JSON_ARRAY=$(echo $CHANGED | jq -R 'split(" ")')
+          # Convert to JSON array for matrix
+          JSON_ARRAY=$(echo $CHANGED | xargs -n1 | jq -R . | jq -s .)
           echo "services=$JSON_ARRAY" >> $GITHUB_OUTPUT
 
   build_and_push:
