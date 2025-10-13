@@ -44,11 +44,9 @@ jobs:
 
           echo "Changed services: $CHANGED"
 
-          # Build a valid JSON array
           JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s -c)
           echo "JSON_ARRAY=$JSON_ARRAY"
 
-          # ✅ Safe multi-line output (avoids quote escaping)
           {
             echo "services<<EOF"
             echo "$JSON_ARRAY"
@@ -61,9 +59,13 @@ jobs:
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_changes.outputs.services) }}
+
     steps:
-      - name: Call reusable workflow for each service
-        uses: ./.github/workflows/reusable-service-ci.yml
+      - name: Trigger reusable CI for ${{ matrix.service }}
+        uses: IronOps/mv100/.github/workflows/reusable-service-ci.yml@main
         with:
           service: ${{ matrix.service }}
           path: backend/${{ matrix.service }}
+        secrets:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
