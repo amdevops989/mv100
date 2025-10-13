@@ -58,7 +58,7 @@ jobs:
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_changes.outputs.services) }}
-    uses: IronOps/mv100/.github/workflows/reusable-service-ci.yml@main
+    uses: amdevops989/mv100/.github/workflows/reusable-service-ci.yml@main
     with:
       service: ${{ matrix.service }}
       path: backend/${{ matrix.service }}
