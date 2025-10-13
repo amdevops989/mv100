@@ -17,6 +17,8 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+      GH_PAT:
+        required: true   # Personal Access Token with repo scope
 
 jobs:
   build_and_push:
@@ -79,12 +81,12 @@ jobs:
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.semver }}
 
-      # 6️⃣ Push Git tag back to repo (uses system GITHUB_TOKEN)
-      - name: Push Git tag
+      # 6️⃣ Push Git tag using PAT
+      - name: Push Git tag using PAT
         if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "CI Auto Tag"
+          git config user.email "ci-bot@example.com"
 
           git tag -a ${{ steps.docker_tags.outputs.semver }} -m "CI: Auto tag ${{ steps.docker_tags.outputs.semver }}"
-          git push origin ${{ steps.docker_tags.outputs.semver }}
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} ${{ steps.docker_tags.outputs.semver }}
