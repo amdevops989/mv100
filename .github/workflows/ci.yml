@@ -1,4 +1,6 @@
-name: "Monorepo CI — Build & Push Changed Services"
+
+Invalid workflow file: .github/workflows/ci.yml#L1
+(Line: 69, Col: 9): Unexpected value 'secrets'name: "Monorepo CI — Build & Push Changed Services"
 
 on:
   push:
@@ -45,8 +47,6 @@ jobs:
           echo "Changed services: $CHANGED"
 
           JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s -c)
-          echo "JSON_ARRAY=$JSON_ARRAY"
-
           {
             echo "services<<EOF"
             echo "$JSON_ARRAY"
@@ -55,17 +55,13 @@ jobs:
 
   build_and_push:
     needs: detect_changes
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         service: ${{ fromJson(needs.detect_changes.outputs.services) }}
-
-    steps:
-      - name: Trigger reusable CI for ${{ matrix.service }}
-        uses: IronOps/mv100/.github/workflows/reusable-service-ci.yml@main
-        with:
-          service: ${{ matrix.service }}
-          path: backend/${{ matrix.service }}
-        secrets:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_PASSWORD }}
+    uses: IronOps/mv100/.github/workflows/reusable-service-ci.yml@main
+    with:
+      service: ${{ matrix.service }}
+      path: backend/${{ matrix.service }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
