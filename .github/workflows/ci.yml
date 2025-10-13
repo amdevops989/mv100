@@ -1,8 +1,11 @@
+name: "Monorepo CI — Build & Push Changed Services"
+
 on:
   push:
     branches:
       - main
       - "release/**"
+      - "develop"
     paths:
       - "backend/**"
   pull_request:
@@ -23,7 +26,6 @@ jobs:
       - name: Detect changed backend services
         id: detect
         run: |
-          set -e
           ALL_SERVICES=$(ls -1 backend)
           echo "All services: $ALL_SERVICES"
 
@@ -41,7 +43,6 @@ jobs:
           fi
 
           echo "Changed services: $CHANGED"
-
           JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s -c)
           {
             echo "services<<EOF"
