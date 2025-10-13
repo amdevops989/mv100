@@ -45,11 +45,16 @@ jobs:
           fi
           echo "Changed services: $CHANGED"
 
-          # Convert to JSON array safely (no extra spaces)
-          JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s .)
+          # Convert to JSON array (single line)
+          JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s -c .)
 
-          # Set output safely
-          echo "services=${JSON_ARRAY}" >> $GITHUB_OUTPUT
+          # Strip any newline or extra spaces
+          JSON_ARRAY=$(echo "$JSON_ARRAY" | tr -d '\n' | tr -d '\r' | xargs)
+
+          echo "Final JSON array: $JSON_ARRAY"
+
+          # Write output safely (MUST be one line)
+          echo "services=$JSON_ARRAY" >> "$GITHUB_OUTPUT"
 
   build_and_push:
     needs: detect_changes
