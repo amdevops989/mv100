@@ -1,188 +1,60 @@
-name: "Reusable: service-ci"
+name: "Monorepo CI — Build & Push Changed Services"
+
 on:
-  workflow_call:
-    inputs:
-      service:
-        required: true
-        type: string
-      path:
-        required: true
-        type: string
-      image_name:
-        required: false
-        type: string
-    secrets:
-      DOCKER_REGISTRY:
-        required: false
-      DOCKER_USERNAME:
-        required: false
-      DOCKER_PASSWORD:
-        required: false
-      SNYK_TOKEN:
-        required: false
-      GHCR_PAT:
-        required: false
+  push:
+    branches:
+      - main
+      - "release/**"
+    paths:
+      - "backend/**"
+  pull_request:
+    paths:
+      - "backend/**"
 
 jobs:
-  setup:
+  detect_changes:
     runs-on: ubuntu-latest
     outputs:
-      service: ${{ inputs.service }}
-      path: ${{ inputs.path }}
-      image: ${{ inputs.image_name || format('ghcr.io/{0}/{1}:pr-{2}', github.repository_owner, inputs.service, github.run_id) }}
+      services: ${{ steps.detect.outputs.services }}
     steps:
-      - name: checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up service variables
-        id: vars
+      - name: Detect changed backend services
+        id: detect
         run: |
-          echo "SERVICE=${{ inputs.service }}" >> $GITHUB_OUTPUT
-          echo "PATH_TO_SERVICE=${{ inputs.path }}" >> $GITHUB_OUTPUT
-          echo "IMAGE=${{ inputs.image_name || format('ghcr.io/{0}/{1}:pr-{2}', github.repository_owner, inputs.service, github.run_id) }}" >> $GITHUB_OUTPUT
+          ALL_SERVICES=$(ls -1 backend)
+          echo "All services: $ALL_SERVICES"
 
-  lint_test_build:
-    needs: setup
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Use Node (if Node project)
-        if: fileExists(needs.setup.outputs.PATH_TO_SERVICE + '/package.json')
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install deps (yarn if present else npm)
-        working-directory: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-        run: |
-          if [ -f package-lock.json ]; then npm ci; elif [ -f yarn.lock ]; then yarn --frozen-lockfile; elif [ -f pnpm-lock.yaml ]; then npm i -g pnpm && pnpm i; else echo "No known lockfile"; fi
-
-      - name: Lint
-        working-directory: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-        if: fileExists(needs.setup.outputs.PATH_TO_SERVICE + '/package.json')
-        run: |
-          if npm run | grep -q "lint"; then npm run lint || true; else echo "no lint script"; fi
-
-      - name: Run unit tests
-        working-directory: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-        if: fileExists(needs.setup.outputs.PATH_TO_SERVICE + '/package.json')
-        run: |
-          if npm run | grep -q "test"; then npm test -- --ci --reporters=default || npm test || true; else echo "no test script"; fi
-
-      - name: Build artifact / docker image (build only)
-        working-directory: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-        run: |
-          # build artifact if applicable
-          if [ -f Dockerfile ]; then echo "Dockerfile present"; else echo "No Dockerfile - building artifact if applicable"; fi
-
-  container_build_and_scan:
-    needs: lint_test_build
-    runs-on: ubuntu-latest
-    if: ${{ steps.setup.outputs.PATH_TO_SERVICE != '' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Log in to registry (if secrets present)
-        if: ${{ secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD }}
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build Docker image
-        working-directory: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-          file: ${{ needs.setup.outputs.PATH_TO_SERVICE }}/Dockerfile
-          push: false
-          tags: ${{ needs.setup.outputs.image }}
-
-      - name: Save image name
-        run: echo "IMAGE=${{ needs.setup.outputs.image }}" >> $GITHUB_OUTPUT
-        id: imagevar
-
-      - name: Trivy container scan (vuln)
-        uses: aquasecurity/trivy-action@v2
-        with:
-          image-ref: ${{ needs.setup.outputs.image }}
-          format: 'table'
-          exit-code: '1'
-          vuln-type: 'os,library'
-        continue-on-error: true
-
-      - name: Snyk test (optional, if SNYK_TOKEN)
-        if: ${{ secrets.SNYK_TOKEN }}
-        uses: snyk/actions/node@v2
-        with:
-          command: test
-          args: --file=package.json
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-  dast_zap_scan:
-    needs: container_build_and_scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Start service with docker-compose (for scanning)
-        working-directory: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-        run: |
-          # If your service can be started with docker-compose.test.yml, adjust accordingly.
-          if [ -f docker-compose.test.yml ]; then docker compose -f docker-compose.test.yml up -d --build; sleep 6; else
-            # try running the image directly on a port
-            docker run -d --name temp-scan -p 8080:8080 ${{ needs.setup.outputs.image }} || true
-            sleep 6
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          else
+            BASE_SHA=$(git rev-parse HEAD~1)
+            HEAD_SHA=HEAD
           fi
 
-      - name: Run OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.4.0
-        with:
-          target: 'http://host.docker.internal:8080'
-          cmd_options: '-t 1' 
-        continue-on-error: true
+          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | tr '\n' ' ')
+          if [ -z "$CHANGED" ]; then
+            CHANGED="$ALL_SERVICES"
+          fi
+          echo "Changed services: $CHANGED"
 
-      - name: Tear down containers
-        run: |
-          docker ps -a
-          docker rm -f temp-scan || true
-          if [ -f docker-compose.test.yml ]; then docker compose -f docker-compose.test.yml down; fi
+          # Output as JSON array
+          JSON_ARRAY=$(echo $CHANGED | jq -R 'split(" ")')
+          echo "services=$JSON_ARRAY" >> $GITHUB_OUTPUT
 
-  publish_image:
-    needs: container_build_and_scan
+  build_and_push:
+    needs: detect_changes
     runs-on: ubuntu-latest
-    if: ${{ secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD && github.event_name != 'pull_request' }}
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect_changes.outputs.services) }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Log in to registry
-        uses: docker/login-action@v2
+      - name: Call reusable workflow for each service
+        uses: ./.github/workflows/reusable-service-ci.yml
         with:
-          registry: ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push image (release tag)
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ needs.setup.outputs.PATH_TO_SERVICE }}
-          file: ${{ needs.setup.outputs.PATH_TO_SERVICE }}/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}/${{ github.repository_owner }}/${{ needs.setup.outputs.service }}:latest
-            ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}/${{ github.repository_owner }}/${{ needs.setup.outputs.service }}:${{ github.sha }}
+          service: ${{ matrix.service }}
+          path: backend/${{ matrix.service }}
