@@ -17,6 +17,8 @@ on:
         required: true
       DOCKERHUB_TOKEN:
         required: true
+      GITHUB_TOKEN:
+        required: true  # Needed to push Git tags
 
 jobs:
   build_and_push:
@@ -53,20 +55,18 @@ jobs:
           fi
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
-          # Find the latest semantic version tag
+          # Find latest semantic tag
           LAST_TAG=$(git tag --list "v*" --sort=-v:refname | head -n1)
 
           if [[ -z "$LAST_TAG" ]]; then
-            # no tags exist, start at v0.1.0
             NEW_SEMVER="v0.1.0"
           else
-            # increment patch version
             IFS='.' read -r MAJOR MINOR PATCH <<< "${LAST_TAG#v}"
             PATCH=$((PATCH+1))
             NEW_SEMVER="v${MAJOR}.${MINOR}.${PATCH}"
           fi
-
           echo "semver=$NEW_SEMVER" >> $GITHUB_OUTPUT
+          echo "New semantic version: $NEW_SEMVER"
 
       # 5️⃣ Build & push Docker image
       - name: Build and push Docker image
@@ -77,5 +77,18 @@ jobs:
           push: true
           tags: |
             ${{ inputs.docker_repo }}:latest
+            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.sha }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.semver }}
+
+      # 6️⃣ Push semantic version tag back to Git
+      - name: Push Git tag
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a ${{ steps.docker_tags.outputs.semver }} -m "CI: Auto tag ${{ steps.docker_tags.outputs.semver }}"
+          git push origin ${{ steps.docker_tags.outputs.semver }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
