@@ -26,12 +26,9 @@ jobs:
         id: detect
         run: |
           set -e
-
-          # List all backend top-level folders
           ALL_SERVICES=$(ls -1 backend)
           echo "All services: $ALL_SERVICES"
 
-          # Determine base and head SHAs
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
@@ -40,29 +37,23 @@ jobs:
             HEAD_SHA=HEAD
           fi
 
-          # Detect changed services
           CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | grep -v '^$' || true)
-
           if [ -z "$CHANGED" ]; then
-            echo "No specific service changed — building all"
             CHANGED="$ALL_SERVICES"
           fi
 
           echo "Changed services: $CHANGED"
 
-          # Force JSON array (always brackets, even for one)
+          # Build a valid JSON array
           JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s -c)
+          echo "JSON_ARRAY=$JSON_ARRAY"
 
-          # Verify JSON format
-          echo "$JSON_ARRAY" | jq . > /dev/null
-
-          # Clean any trailing spaces/newlines
-          JSON_ARRAY=$(echo "$JSON_ARRAY" | tr -d '\n\r' | xargs)
-
-          echo "Final JSON array: $JSON_ARRAY"
-
-          # Output for matrix
-          echo "services=$JSON_ARRAY" >> "$GITHUB_OUTPUT"
+          # ✅ Safe multi-line output (avoids quote escaping)
+          {
+            echo "services<<EOF"
+            echo "$JSON_ARRAY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
   build_and_push:
     needs: detect_changes
