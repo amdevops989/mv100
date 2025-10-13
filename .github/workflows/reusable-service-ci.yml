@@ -19,30 +19,41 @@ jobs:
   build_and_push:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Debug: show current working directory and files
+      - name: Debug pwd and repo contents
+        run: |
+          echo "***************************** Current working directory *****************************"
+          pwd
+          echo "Listing root contents:"
+          ls -la
+
+      # 3️⃣ Debug: show contents of the service folder
+      - name: Debug service folder
+        run: |
+          echo "Listing files in ${{ inputs.path }}:"
+          ls -la ${{ inputs.path }}
+
+      # 4️⃣ Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 5️⃣ Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Debug step: print current working directory
-      - name: Show working directory
-        run: |
-          echo "*****************************Current working directory:***********************************"
-          pwd
-          echo "Contents of this directory:"
-          ls -la
-
+      # 6️⃣ Build and push Docker image
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ${{ inputs.path }}
+          context: ${{ inputs.path }}          # e.g., backend/auth
+          file: ${{ inputs.path }}/Dockerfile  # ensure Dockerfile is here
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mv100-${{ inputs.service }}:latest
