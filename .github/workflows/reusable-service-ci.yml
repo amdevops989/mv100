@@ -69,7 +69,7 @@ jobs:
 
 
       # 5️⃣ Build & push Docker image
-      - name: Build and push Docker image
+      - name: Build & Push Docker image
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.path }}
@@ -77,8 +77,9 @@ jobs:
           push: true
           tags: |
             ${{ inputs.docker_repo }}:latest
-            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
-            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.combo }}
+            ${{ inputs.docker_repo }}:${{ steps.tags.outputs.branch }}
+            ${{ inputs.docker_repo }}:${{ steps.tags.outputs.combo }}
+
 
       # 6️⃣ Push Git tag using PAT
       - name: Push Git tag using PAT
