@@ -13,6 +13,9 @@ on:
       - "backend/**"
 permissions:
   contents: write   # Needed to push Git tags via PAT
+  packages: write 
+  actions: read
+
 
 jobs:
   detect_changes:
