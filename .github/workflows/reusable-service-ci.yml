@@ -90,7 +90,115 @@ jobs:
           tags: |
             ${{ inputs.docker_repo }}:latest
             ${{ inputs.docker_repo }}:${{ steps.vars.outputs.branch }}
+            ${{ inputsname: "Reusable CI for Service"
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+      path:
+        required: true
+        type: string
+      docker_repo:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      GH_PAT:
+        required: true   # PAT with 'repo' scope
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout full repo (fetch tags for semantic versioning)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}   # ✅ Fix: ensure token is provided
+
+      # 2️⃣ Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3️⃣ Docker login
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4️⃣ Determine branch, semantic version, and combo tag
+      - name: Determine tags
+        id: vars
+        run: |
+          # 🧩 Determine branch
+          if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+            BRANCH="${GITHUB_REF#refs/heads/}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            BRANCH="release"
+          else
+            BRANCH="unknown"
+          fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+          # 🧩 Find last semantic tag
+          LAST_TAG=$(git tag --list "v*" --sort=-v:refname | head -n1)
+          echo "Last tag: ${LAST_TAG:-none}"
+
+          # 🧩 Compute new semantic version (patch bump)
+          if [[ -z "$LAST_TAG" ]]; then
+            NEW_SEMVER="v0.1.0"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LAST_TAG#v}"
+            PATCH=$((PATCH+1))
+            NEW_SEMVER="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          echo "semver=$NEW_SEMVER" >> $GITHUB_OUTPUT
+
+          # 🧩 Combine branch + version (e.g. main-v1.0.2)
+          COMBO_TAG="${BRANCH}-${NEW_SEMVER}"
+          echo "combo=$COMBO_TAG" >> $GITHUB_OUTPUT
+
+          echo "✅ Computed tags:"
+          echo " - latest"
+          echo " - ${BRANCH}"
+          echo " - ${COMBO_TAG}"
+
+      # 5️⃣ Build & push Docker image
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.path }}
+          file: ${{ inputs.path }}/Dockerfile
+          push: true
+          tags: |
+            ${{ inputs.docker_repo }}:latest
+            ${{ inputs.docker_repo }}:${{ steps.vars.outputs.branch }}
             ${{ inputs.docker_repo }}:${{ steps.vars.outputs.combo }}
+
+      # 6️⃣ Push Git tag using PAT
+      - name: Push Git tag
+        if: ${{ success() }}
+        run: |
+          git config user.name "CI Auto Tag"
+          git config user.email "ci-bot@github.com"
+          git tag -a ${{ steps.vars.outputs.semver }} -m "CI: release ${{ steps.vars.outputs.semver }}"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} ${{ steps.vars.outputs.semver }}
+
+      # 7️⃣ Summary
+      - name: Summary
+        run: |
+          echo "✅ Successfully built and pushed:"
+          echo "🔹 Docker image: ${{ inputs.docker_repo }}:${{ steps.vars.outputs.combo }}"
+          echo "🔹 Git tag: ${{ steps.vars.outputs.semver }}".docker_repo }}:${{ steps.vars.outputs.combo }}
 
       # 6️⃣ Create & push Git tag for new semver
       - name: Push Git tag
