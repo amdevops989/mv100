@@ -42,31 +42,31 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 4️⃣ Determine branch, SHA, and semantic version
-      - name: Set Docker tags
-        id: docker_tags
+      - name: Set version tags
+        id: tags
         run: |
-          # Commit SHA
-          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-
-          # Branch name
-          BRANCH="unknown"
-          if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-            BRANCH="${GITHUB_REF#refs/heads/}"
-          fi
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-
-          # Find latest semantic tag
-          LAST_TAG=$(git tag --list "v*" --sort=-v:refname | head -n1)
-
-          if [[ -z "$LAST_TAG" ]]; then
-            NEW_SEMVER="v0.1.0"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            BRANCH=$(echo "${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" | tr '/' '-')
+            TAG_COMBO="${BRANCH}-${VERSION}"
+          elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+            BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
+            VERSION="v0.0.0"
+            TAG_COMBO="${BRANCH}-${VERSION}"
           else
-            IFS='.' read -r MAJOR MINOR PATCH <<< "${LAST_TAG#v}"
-            PATCH=$((PATCH+1))
-            NEW_SEMVER="v${MAJOR}.${MINOR}.${PATCH}"
+            BRANCH="unknown"
+            VERSION="v0.0.0"
+            TAG_COMBO="${BRANCH}-${VERSION}"
           fi
-          echo "semver=$NEW_SEMVER" >> $GITHUB_OUTPUT
-          echo "New semantic version: $NEW_SEMVER"
+
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "combo=$TAG_COMBO" >> $GITHUB_OUTPUT
+          echo "✅ Using tags:"
+          echo " - latest"
+          echo " - $BRANCH"
+          echo " - $TAG_COMBO"
+
 
       # 5️⃣ Build & push Docker image
       - name: Build and push Docker image
