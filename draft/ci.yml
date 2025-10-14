@@ -1,0 +1,68 @@
+name: "Monorepo CI — Build & Push Changed Services"
+
+on:
+  push:
+    branches:
+      - main
+      - "develop"
+      - "release/**"
+    paths:
+      - "backend/**"
+  pull_request:
+    paths:
+      - "backend/**"
+permissions:
+  contents: write   # Needed to push Git tags via PAT
+
+jobs:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect.outputs.services }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed backend services
+        id: detect
+        run: |
+          ALL_SERVICES=$(ls -1 backend)
+          echo "All services: $ALL_SERVICES"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          else
+            BASE_SHA=$(git rev-parse HEAD~1)
+            HEAD_SHA=HEAD
+          fi
+
+          CHANGED=$(git diff --name-only $BASE_SHA $HEAD_SHA -- backend/ | awk -F/ '{print $2}' | sort -u | grep -v '^$' || true)
+          if [ -z "$CHANGED" ]; then
+            CHANGED="$ALL_SERVICES"
+          fi
+
+          echo "Changed services: $CHANGED"
+          JSON_ARRAY=$(echo "$CHANGED" | tr ' ' '\n' | jq -R . | jq -s -c)
+          {
+            echo "services<<EOF"
+            echo "$JSON_ARRAY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  build_and_push:
+    needs: detect_changes
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect_changes.outputs.services) }}
+    uses: amdevops989/mv100/.github/workflows/reusable-service-ci.yml@main
+    with:
+      service: ${{ matrix.service }}
+      path: backend/${{ matrix.service }}
+      docker_repo: devopsflow999/${{ matrix.service }}  # foreign repo
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}
