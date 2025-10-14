@@ -18,71 +18,58 @@ on:
       DOCKERHUB_TOKEN:
         required: true
       GH_PAT:
-        required: true
+        required: true   # Personal Access Token with repo scope
 
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout repository (fetch all tags)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
 
-      # 2️⃣ Debug info
-      - name: Debug context
-        run: |
-          echo "🔍 Service: ${{ inputs.service }}"
-          echo "📂 Path: ${{ inputs.path }}"
-          echo "🔗 Branch ref: ${GITHUB_REF}"
-          echo "🔗 Base ref: ${GITHUB_BASE_REF}"
-          echo "💾 Commit SHA: ${GITHUB_SHA}"
-          echo "🗂️ Listing contents of ${{ inputs.path }}"
-          ls -la ${{ inputs.path }}
-
-      # 3️⃣ Setup Docker Buildx
+      # 2️⃣ Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4️⃣ Log in to Docker Hub
-      - name: Docker login
+      # 3️⃣ Docker login
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 5️⃣ Define Docker tags
-      - name: Set version tags
-        id: tags
+      # 4️⃣ Determine branch, SHA, and semantic version
+      - name: Set Docker tags
+        id: docker_tags
         run: |
-          echo "🧠 Determining tags..."
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/}"
-            BRANCH="release"
-            TAG_COMBO="${BRANCH}-${VERSION}"
-          elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-            BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/' '-')
-            VERSION="v0.0.0"
-            TAG_COMBO="${BRANCH}-${VERSION}"
-          else
-            BRANCH="unknown"
-            VERSION="v0.0.0"
-            TAG_COMBO="${BRANCH}-${VERSION}"
+          # Commit SHA
+          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
+          # Branch name
+          BRANCH="unknown"
+          if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+            BRANCH="${GITHUB_REF#refs/heads/}"
           fi
-
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "combo=$TAG_COMBO" >> $GITHUB_OUTPUT
 
-          echo "✅ Tags prepared:"
-          echo " - latest"
-          echo " - $BRANCH"
-          echo " - $TAG_COMBO"
+          # Find latest semantic tag
+          LAST_TAG=$(git tag --list "v*" --sort=-v:refname | head -n1)
 
-      # 6️⃣ Build & push Docker image
-      - name: Build & Push Docker image
+          if [[ -z "$LAST_TAG" ]]; then
+            NEW_SEMVER="v0.1.0"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LAST_TAG#v}"
+            PATCH=$((PATCH+1))
+            NEW_SEMVER="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+          echo "semver=$NEW_SEMVER" >> $GITHUB_OUTPUT
+          echo "New semantic version: $NEW_SEMVER"
+
+      # 5️⃣ Build & push Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.path }}
@@ -90,17 +77,16 @@ jobs:
           push: true
           tags: |
             ${{ inputs.docker_repo }}:latest
-            ${{ inputs.docker_repo }}:${{ steps.tags.outputs.branch }}
-            ${{ inputs.docker_repo }}:${{ steps.tags.outputs.combo }}
+            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.sha }}
+            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
+            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.semver }}
 
-      # 7️⃣ Optionally push semantic tag to GitHub (for release versions)
-      - name: Push Git tag if semantic version
-        if: startsWith(github.ref, 'refs/tags/v')
+      # 6️⃣ Push Git tag using PAT
+      - name: Push Git tag using PAT
+        if: always()
         run: |
-          echo "📦 Pushing Git tag to repo..."
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.tags.outputs.version }}" -m "Release ${{ steps.tags.outputs.version }}"
-          git push origin "${{ steps.tags.outputs.version }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          git config user.name "CI Auto Tag"
+          git config user.email "ci-bot@example.com"
+
+          git tag -a ${{ steps.docker_tags.outputs.semver }} -m "CI: Auto tag ${{ steps.docker_tags.outputs.semver }}"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }} ${{ steps.docker_tags.outputs.semver }}
