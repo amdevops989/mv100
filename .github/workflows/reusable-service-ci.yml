@@ -79,7 +79,7 @@ jobs:
             ${{ inputs.docker_repo }}:latest
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.sha }}
             ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.branch }}
-            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.semver }}
+            ${{ inputs.docker_repo }}:${{ steps.docker_tags.outputs.combo }}
 
       # 6️⃣ Push Git tag using PAT
       - name: Push Git tag using PAT
