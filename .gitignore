@@ -61,7 +61,7 @@ docker-compose.override.yml
 docker-compose.override.yaml
 # Dockerfile*
 # **/Dockerfile*
-*.dockerignore
+# *.dockerignore
 *.log
 docker-compose.*.yml
 docker-compose.*.yaml

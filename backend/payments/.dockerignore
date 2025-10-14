@@ -1,0 +1,27 @@
+# Node modules (we install inside container)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Environment files (optional: you may COPY them explicitly)
+.env
+.env.local
+.env.development
+.env.test
+.env.staging
+
+# Git
+.git
+.gitignore
+
+# Logs
+logs
+*.log
+
+# Build outputs (if any)
+dist
+build
+
+# OS files
+.DS_Store
+Thumbs.db
