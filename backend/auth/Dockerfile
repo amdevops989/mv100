@@ -7,11 +7,11 @@ WORKDIR /app
 # Enable Yarn via Corepack
 RUN corepack enable && corepack prepare yarn@stable --activate
 
-# Copy package files for caching
-COPY package.json ./
+# Copy package files and lockfile for dependency caching
+COPY package*.json ./
 
-# Install dependencies
-RUN yarn install
+# Install dependencies (express must be listed in package.json!)
+RUN npm install
 
 # Copy all source code
 COPY . .

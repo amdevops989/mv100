@@ -211,7 +211,7 @@
 
     notification:
       build:
-        context: ./backend/notification
+        context: ./backend/notifications
         dockerfile: Dockerfile
       container_name: notification
       env_file:
