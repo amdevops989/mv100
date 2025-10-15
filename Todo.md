@@ -17,9 +17,13 @@ ok
 within prom grafana and loki 
 elk
 
-## https  : lets encrypt 
+## 
 
-
-
-//
-
+minikube : 
+  metallb 
+  helm creating charts for everyservice
+  sealed secrets or vault
+  istio
+  argocd 
+  prometheus grafana loki 
+  sealed secrets or vault

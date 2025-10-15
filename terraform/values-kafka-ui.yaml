@@ -1,0 +1,17 @@
+replicaCount: 1
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+
+service:
+  type: NodePort
+  nodePorts:
+    client: 30092
+
+zookeeper:
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePorts:
+      client: 32181

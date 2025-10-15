@@ -66,17 +66,17 @@
         retries: 10
         start_period: 5s
 
-    pgadmin:
-      image: dpage/pgadmin4:latest
-      container_name: pgadmin
-      depends_on:
-        postgres:
-          condition: service_healthy
-      environment:
-        PGADMIN_DEFAULT_EMAIL: admin@admin.com
-        PGADMIN_DEFAULT_PASSWORD: admin
-      ports:
-        - "5050:80"
+    # pgadmin:
+    #   image: dpage/pgadmin4:latest
+    #   container_name: pgadmin
+    #   depends_on:
+    #     postgres:
+    #       condition: service_healthy
+    #   environment:
+    #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+    #     PGADMIN_DEFAULT_PASSWORD: admin
+    #   ports:
+    #     - "5050:80"
 
     connect:
       image: debezium/connect:2.7.1.Final
@@ -125,7 +125,7 @@
     # ===== Frontend Service =====
     frontend:
       build:
-        context: ./frontend
+        context: ./backend/frontend
         dockerfile: Dockerfile
       container_name: frontend
       ports:
@@ -215,7 +215,7 @@
         dockerfile: Dockerfile
       container_name: notification
       env_file:
-        - ./backend/notification/.env.staging
+        - ./backend/notifications/.env.staging
       depends_on:
       - kafka
       - postgres

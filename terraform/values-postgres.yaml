@@ -1,0 +1,22 @@
+primary:
+  service:
+    type: NodePort
+    nodePorts:
+      postgresql: 30432
+
+auth:
+  username: postgres
+  password: postgres
+  database: mv100db
+
+initdbScriptsConfigMap: postgres-init-sql
+
+# image:
+#   registry: registry-1.docker.io
+#   repository: bitnami/postgresql
+#   tag: latest
+#   digest: ""
+#   ## Specify a imagePullPolicy
+#   ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
+#   ##
+#   pullPolicy: IfNotPresent

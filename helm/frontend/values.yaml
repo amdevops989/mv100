@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: devopsflow999/frontend
+  pullPolicy: Always
+  tag: main-v0.1.2
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+env:
+  VITE_AUTH_BASE: "http://localhost:3000"
+  VITE_CATALOG_BASE: "http://localhost:3001"
+  VITE_CART_BASE: "http://localhost:3002"
+  VITE_ORDERS_BASE: "http://localhost:3003"
+  VITE_PAYMENTS_BASE: "http://localhost:3004"
+
+
+# helm install frontend ./frontend \
+#   --set env.VITE_AUTH_BASE=http://auth:3000 \
+#   --set env.VITE_CATALOG_BASE=http://catalog:3001 \
+#   --set env.VITE_CART_BASE=http://cart:3002 \
+#   --set env.VITE_ORDERS_BASE=http://orders:3003 \
+#   --set env.VITE_PAYMENTS_BASE=http://payments:3004

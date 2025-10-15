@@ -1,0 +1,31 @@
+# replicaCount: 1
+
+# image:
+#   registry: docker.io
+#   repository: bitnami/kafka
+#   tag: 4.0.0
+  
+listeners:
+  client:
+    protocol: PLAINTEXT
+
+service:
+  type: NodePort
+  nodePorts:
+    client: 30092
+
+zookeeper:
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePorts:
+      client: 32181
+  persistence:
+    enabled: true
+    storageClass: standard  # make sure this exists in Minikube
+    size: 5Gi
+
+persistence:
+  enabled: true
+  storageClass: standard  # make sure this exists in Minikube
+  size: 5Gi
