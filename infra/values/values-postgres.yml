@@ -1,0 +1,37 @@
+global:
+  postgresql:
+    auth:
+      username: postgres
+      password: postgres
+      database: mv100db
+
+# image:
+#   repository: bitnami/postgresql
+#   tag: 14
+#   pullPolicy: IfNotPresent
+
+primary:
+  service:
+    type: ClusterIP
+    ports:
+      postgresql: 5432
+
+  persistence:
+    enabled: false    # ✅ disable persistence for Minikube to avoid PVC issues
+
+  extendedConfiguration: |
+    wal_level = logical
+    max_wal_senders = 10
+    max_replication_slots = 10
+    max_wal_size = 1GB
+
+  extraVolumes:
+    - name: init-sql
+      configMap:
+        name: postgres-init-sql
+
+  extraVolumeMounts:
+    - name: init-sql
+      mountPath: /docker-entrypoint-initdb.d/init-db.sql
+      subPath: init-db.sql
+      readOnly: true

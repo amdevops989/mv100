@@ -8,19 +8,19 @@ resource "kubernetes_namespace" "mv100" {
   }
 }
 
-# # -----------------------------
-# #  PostgreSQL Init SQL ConfigMap
-# # -----------------------------
-# resource "kubernetes_config_map" "postgres_init_sql" {
-#   metadata {
-#     name      = "postgres-init-sql"
-#     namespace = kubernetes_namespace.mv100.metadata[0].name
-#   }
+# -----------------------------
+#  PostgreSQL Init SQL ConfigMap
+# -----------------------------
+resource "kubernetes_config_map" "postgres_init_sql" {
+  metadata {
+    name      = "postgres-init-sql"
+    namespace = kubernetes_namespace.mv100.metadata[0].name
+  }
 
-#   data = {
-#     "init-db.sql" = file("${path.module}/sql/init-db.sql")
-#   }
-# }
+  data = {
+    "init-db.sql" = file("${path.module}/sql/init-db.sql")
+  }
+}
 
 # -----------------------------
 # Kafka + Zookeeper
@@ -37,44 +37,44 @@ resource "kubernetes_namespace" "mv100" {
 #   ]
 # }
 
-# # -----------------------------
-# # Debezium Connect
-# # -----------------------------
-# resource "helm_release" "debezium_connect" {
-#   name       = "debezium-connect"
-#   repository = "https://debezium.io/charts/"
-#   chart      = "debezium-connect"
-#   version    = "0.2.1"
-#   namespace  = kubernetes_namespace.mv100.metadata[0].name
+# -----------------------------
+# Debezium Connect
+# -----------------------------
+resource "helm_release" "debezium_connect" {
+  name       = "debezium-connect"
+  repository = "https://debezium.io/charts/"
+  chart      = "debezium-connect"
+  version    = "0.2.1"
+  namespace  = kubernetes_namespace.mv100.metadata[0].name
 
-#   values = [
-#     file("${path.module}/values-debezium.yaml")
-#   ]
+  values = [
+    file("${path.module}/values-debezium.yaml")
+  ]
 
-#   depends_on = [
-#     helm_release.kafka, helm_release.postgresql
-#   ]
-# }
+  depends_on = [
+    helm_release.kafka, helm_release.postgresql
+  ]
+}
 
 
-# # -----------------------------
-# #  PostgreSQL (Bitnami)
-# # -----------------------------
-# resource "helm_release" "postgresql" {
-#   name       = "my-postgresql"
-#   repository = "https://charts.bitnami.com/bitnami"
-#   chart      = "postgresql"
-#   version    = "18.0.15"
-#   namespace  = kubernetes_namespace.mv100.metadata[0].name
+# -----------------------------
+#  PostgreSQL (Bitnami)
+# -----------------------------
+resource "helm_release" "postgresql" {
+  name       = "my-postgresql"
+  repository = "https://charts.bitnami.com/bitnami"
+  chart      = "postgresql"
+  version    = "18.0.15"
+  namespace  = kubernetes_namespace.mv100.metadata[0].name
 
-#   values = [
-#     file("${path.module}/values-postgres.yaml")
-#   ]
+  values = [
+    file("${path.module}/values-postgres.yaml")
+  ]
 
-#   depends_on = [
-#     kubernetes_config_map.postgres_init_sql
-#   ]
-# }
+  depends_on = [
+    kubernetes_config_map.postgres_init_sql
+  ]
+}
 
 # # -----------------------------
 # #  Redis (Bitnami)

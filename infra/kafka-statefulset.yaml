@@ -6,8 +6,8 @@ metadata:
   labels:
     app: kafka-app
 spec:
-  serviceName: kafka-svc
-  replicas: 3
+  serviceName: kafka
+  replicas: 1 ##dev mode  else 3
   selector:
     matchLabels:
       app: kafka-app
@@ -24,9 +24,9 @@ spec:
             - containerPort: 9093
           env:
             - name: REPLICAS
-              value: '3'
+              value: '1' ## dev  else 3
             - name: SERVICE
-              value: kafka-svc
+              value: kafka
             - name: NAMESPACE
               value: kafka
             - name: SHARE_DIR
@@ -34,9 +34,13 @@ spec:
             - name: CLUSTER_ID
               value: bXktY2x1c3Rlci0xMjM0NQ==
             - name: DEFAULT_REPLICATION_FACTOR
-              value: '3'
+              value: '1'  ## dev else 3
             - name: DEFAULT_MIN_INSYNC_REPLICAS
-              value: '2'
+              value: '1' ##dev else 2
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka.kafka.svc.cluster.local:9092
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://0.0.0.0:9092
           volumeMounts:
             - name: data
               mountPath: /mnt/kafka
@@ -53,7 +57,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-svc
+  name: kafka
   namespace: kafka
   labels:
     app: kafka-app

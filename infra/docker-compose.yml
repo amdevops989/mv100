@@ -1,0 +1,224 @@
+  version: '3.8'
+
+  services:
+    kafka:
+      image: bitnami/kafka:latest
+      container_name: kafka
+      environment:
+        - KAFKA_CFG_PROCESS_ROLES=broker,controller
+        - KAFKA_CFG_NODE_ID=1
+        - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+        - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+        - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+        - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+        - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+        - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+        - ALLOW_PLAINTEXT_LISTENER=yes
+      ports:
+        - "9092:9092"
+        - "9094:9094"
+        - "9093:9093"
+      healthcheck:
+        test: ["CMD", "nc", "-z", "localhost", "9092"]
+        interval: 5s
+        retries: 12
+        start_period: 5s
+
+    kafka-ui:
+      image: provectuslabs/kafka-ui:latest
+      container_name: kafka-ui
+      depends_on:
+      - kafka
+      - postgres
+      ports:
+        - "8080:8080"
+      environment:
+        - KAFKA_CLUSTERS_0_NAME=local-cluster
+        - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+        - KAFKA_CLUSTERS_0_READONLY=false
+        - KAFKA_CLUSTERS_0_TOPIC_AUTO_CREATE=true
+
+    postgres:
+      image: postgres:14
+      container_name: postgres
+      environment:
+        POSTGRES_DB: mv100db
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+      ports:
+        - "5432:5432"
+      command:
+        - postgres
+        - -c
+        - wal_level=logical
+        - -c
+        - max_wal_senders=10
+        - -c
+        - max_replication_slots=10
+        - -c
+        - max_wal_size=1GB
+      volumes:
+        - ./pgdata:/var/lib/postgresql/data
+        - ./sql/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      healthcheck:
+        test: ["CMD", "pg_isready", "-U", "postgres"]
+        interval: 5s
+        retries: 10
+        start_period: 5s
+
+    # pgadmin:
+    #   image: dpage/pgadmin4:latest
+    #   container_name: pgadmin
+    #   depends_on:
+    #     postgres:
+    #       condition: service_healthy
+    #   environment:
+    #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+    #     PGADMIN_DEFAULT_PASSWORD: admin
+    #   ports:
+    #     - "5050:80"
+
+    connect:
+      image: debezium/connect:2.7.1.Final
+      container_name: connect
+      depends_on:
+      - kafka
+      - postgres
+      ports:
+        - "8083:8083"
+      environment:
+        BOOTSTRAP_SERVERS: "kafka:9092"
+        GROUP_ID: "1"
+        CONFIG_STORAGE_TOPIC: "connect-configs"
+        OFFSET_STORAGE_TOPIC: "connect-offsets"
+        STATUS_STORAGE_TOPIC: "connect-status"
+        KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+        KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+        VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      # volumes:
+      # - ./connect-data:/kafka/connect
+      # - ./connectors:/connectors
+      # command:                                automate curl -i -X POST -H "Accept:application/json" \
+                                                        #  -H "Content-Type:application/json" \
+                                                        #  localhost:8083/connectors/ \
+                                                        #  -d @pg-auth-catalog-orders.json
+      #   - bash
+      #   - -c
+      #   - |
+      #     # Start Connect
+      #     /kafka/connect/bin/connect-standalone.sh /kafka/connect/etc/kafka/connect-standalone.properties /connectors/pg-auth-catalog-orders.json
+    redis:
+      image: redis:7
+      container_name: redis
+      ports:
+        - "6379:6379"
+      command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+      volumes:
+        - ./redisdata:/data
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        retries: 10
+        start_period: 5s
+
+    # ===== Frontend Service =====
+    frontend:
+      build:
+        context: ./backend/frontend
+        dockerfile: Dockerfile
+      container_name: frontend
+      ports:
+        - "80:80"
+      depends_on:
+        - auth
+        - catalog
+        - cart
+        - orders
+        - payments
+        - notification
+
+  # ===== Backend Services =====
+    auth:
+      build:
+        context: ./backend/auth
+        dockerfile: Dockerfile
+      container_name: auth
+      env_file:
+        - ./backend/auth/.env.staging
+      depends_on:
+      - kafka
+      - postgres
+      - redis
+      ports:
+        - "3000:3000"
+
+    cart:
+      build:
+        context: ./backend/cart
+        dockerfile: Dockerfile
+      container_name: cart
+      env_file:
+        - ./backend/cart/.env.staging
+      depends_on:
+      - kafka
+      - postgres
+      - redis
+      ports:
+        - "3002:3002"
+
+    catalog:
+      build:
+        context: ./backend/catalog
+        dockerfile: Dockerfile
+      container_name: catalog
+      env_file:
+        - ./backend/catalog/.env.staging
+      depends_on:
+      - kafka
+      - postgres
+      - redis
+      ports:
+        - "3001:3001"
+
+    orders:
+      build:
+        context: ./backend/orders
+        dockerfile: Dockerfile
+      container_name: orders
+      env_file:
+        - ./backend/orders/.env.staging
+      depends_on:
+      - kafka
+      - postgres
+      - redis
+      ports:
+        - "3003:3003"
+
+    payments:
+      build:
+        context: ./backend/payments
+        dockerfile: Dockerfile
+      container_name: payments
+      env_file:
+        - ./backend/payments/.env.staging
+      depends_on:
+      - kafka
+      - postgres
+      - redis
+      ports:
+        - "3004:3004"
+
+    notification:
+      build:
+        context: ./backend/notification
+        dockerfile: Dockerfile
+      container_name: notification
+      env_file:
+        - ./backend/notifications/.env.staging
+      depends_on:
+      - kafka
+      - postgres
+      - redis
+      ports:
+        - "3005:3005"

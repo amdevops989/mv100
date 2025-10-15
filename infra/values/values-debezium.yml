@@ -1,0 +1,36 @@
+image:
+  repository: debezium/connect
+  tag: 2.7.1.Final
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8083
+
+resources: {}
+
+env:
+  - name: BOOTSTRAP_SERVERS
+    value: "kafka:9092"
+  - name: GROUP_ID
+    value: "1"
+  - name: CONFIG_STORAGE_TOPIC
+    value: "connect-configs"
+  - name: OFFSET_STORAGE_TOPIC
+    value: "connect-offsets"
+  - name: STATUS_STORAGE_TOPIC
+    value: "connect-status"
+  - name: KEY_CONVERTER
+    value: "org.apache.kafka.connect.json.JsonConverter"
+  - name: VALUE_CONVERTER
+    value: "org.apache.kafka.connect.json.JsonConverter"
+  - name: KEY_CONVERTER_SCHEMAS_ENABLE
+    value: "false"
+  - name: VALUE_CONVERTER_SCHEMAS_ENABLE
+    value: "false"
+
+# Optional: mount any extra config files
+extraVolumes: []
+extraVolumeMounts: []

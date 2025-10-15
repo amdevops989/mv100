@@ -1,0 +1,84 @@
+# image:
+#   repository: bitnami/kafka
+#   tag: latest
+
+# replicaCount: 1
+
+# controller:
+#   replicaCount: 1
+#   quorumVoters: "1@my-kafka:9093"
+
+# listeners:
+#   client:
+#     protocol: PLAINTEXT
+#     name: PLAINTEXT
+#     port: 9092
+#   controller:
+#     protocol: PLAINTEXT
+#     name: CONTROLLER
+#     port: 9093
+#   external:
+#     protocol: PLAINTEXT
+#     name: EXTERNAL
+#     port: 9094
+
+# advertisedListeners:
+#   - name: PLAINTEXT
+#     address: my-kafka
+#     port: 9092
+#   - name: EXTERNAL
+#     address: localhost
+#     port: 9094
+
+# listenerSecurityProtocolMap:
+#   PLAINTEXT: PLAINTEXT
+#   CONTROLLER: PLAINTEXT
+#   EXTERNAL: PLAINTEXT
+
+# interBrokerListenerName: PLAINTEXT
+# controllerListenerNames: CONTROLLER
+# processRoles: broker,controller
+
+# auth:
+#   clientProtocol: plaintext
+#   interBrokerProtocol: plaintext
+#   controllerListenerProtocol: plaintext
+
+# allowPlaintextListener: true
+
+# service:
+#   type: NodePort
+#   ports:
+#     client: 9092
+#     controller: 9093
+#     external: 9094
+
+# extraEnvVars:
+#   - name: KAFKA_CFG_NODE_ID
+#     value: "1"
+#   - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+#     value: "1@my-kafka:9093"
+
+
+auth:
+  clientProtocol: plaintext
+  interBrokerProtocol: plaintext
+
+controller:
+  enabled: true
+
+kafka:
+  replicaCount: 1
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+  interbroker:
+    protocol: PLAINTEXT
+
+externalAccess:
+  enabled: false
+
+# image:
+#   tag: 4.0.0-debian-12-r0
+
