@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: devopsflow999/auth
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3001
+
+resources: {}
+
+env:
+  PGUSER: appuser
+  PGPASSWORD: appuser
+  PGDATABASE: mv100db
+  PGHOST: postgres-postgresql.kafka.svc.cluster.local
+  PGPORT: "5432"
+
+  REDIS_URL: redis://redis-master.kafka.svc.cluster.local:6379
+  KAFKA_BROKERS: kafka.kafka.svc.cluster.local:9092
+
+  JWT_SECRET: supersecretkey
+  PORT: "3001"

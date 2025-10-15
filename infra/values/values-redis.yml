@@ -1,0 +1,16 @@
+architecture: standalone
+
+auth:
+  enabled: false
+
+replica:
+  replicaCount: 0
+
+master:
+  persistence:
+    enabled: false
+
+service:
+  type: NodePort
+  nodePort: 30379
+  port: 6379

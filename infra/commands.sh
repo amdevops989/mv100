@@ -25,6 +25,19 @@ helm repo update
   -f values/values-kafka-ui.yml
 
 
+## installing redis  : 
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
+
+helm install redis bitnami/redis \
+  --namespace kafka \
+  --create-namespace \
+  -f /values/values-redis.yml
+
+
+
 
 
 
