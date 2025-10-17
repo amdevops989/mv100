@@ -1,4 +1,4 @@
-import axios from "axios";
+// import axios from "axios";
 
 // export const BASES = {
 //   auth: "http://localhost:3000",
@@ -7,6 +7,25 @@ import axios from "axios";
 //   orders: "http://localhost:3003",
 //   payments: "http://localhost:3004",
 // };
+
+// // shared axios client with token interceptor
+// const client = axios.create({ timeout: 10000 });
+
+// client.interceptors.request.use(cfg => {
+//   try {
+//     const token = localStorage.getItem("token");
+//     if (token) {
+//       cfg.headers = { ...(cfg.headers || {}), Authorization: `Bearer ${token}` };
+//     }
+//   } catch (e) {}
+//   return cfg;
+// });
+
+// export default client;
+
+
+import axios from "axios";
+
 export const BASES = {
   auth: import.meta.env.VITE_API_AUTH,
   catalog: import.meta.env.VITE_API_CATALOG,
@@ -15,15 +34,17 @@ export const BASES = {
   payments: import.meta.env.VITE_API_PAYMENTS,
 };
 
-//
-// shared axios client with token interceptor
+// Shared axios client with token interceptor
 const client = axios.create({ timeout: 10000 });
 
 client.interceptors.request.use(cfg => {
   try {
     const token = localStorage.getItem("token");
     if (token) {
-      cfg.headers = { ...(cfg.headers || {}), Authorization: `Bearer ${token}` };
+      cfg.headers = {
+        ...(cfg.headers || {}),
+        Authorization: `Bearer ${token}`,
+      };
     }
   } catch (e) {}
   return cfg;

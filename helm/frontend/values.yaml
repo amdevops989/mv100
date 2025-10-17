@@ -2,7 +2,8 @@ replicaCount: 1
 
 image:
   repository: devopsflow999/frontend
-  tag: main-v0.1.1
+  # tag: main-v0.1.1
+  tag: test21
   pullPolicy: IfNotPresent
 
 service:
@@ -12,8 +13,12 @@ service:
 resources: {}
 
 env:
-  VITE_AUTH_BASE: http://auth:3000
-  VITE_CATALOG_BASE: http://catalog:3001
-  VITE_CART_BASE: http://cart:3002
-  VITE_ORDERS_BASE: http://orders:3003
-  VITE_PAYMENTS_BASE: http://payments:3004
+  VITE_API_AUTH: http://auth.mv100.svc.cluster.local
+  VITE_API_CATALOG: http://catalog:3001
+  VITE_API_CART: http://cart:3002
+  VITE_API_ORDERS: http://orders:3003
+  VITE_API_PAYMENTS: http://payments:3004
+
+ingress:
+  enabled: true
+  host: frontend.localdev.me

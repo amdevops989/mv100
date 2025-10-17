@@ -23,3 +23,7 @@ env:
 
   JWT_SECRET: supersecretkey
   PORT: "3000"
+
+ingress:
+  enabled: true
+  host: auth.localdev.me

@@ -23,3 +23,7 @@ env:
 
   JWT_SECRET: supersecretkey
   PORT: "3001"
+
+ingress:
+  enabled: true
+  host: catalog.localdev.me
