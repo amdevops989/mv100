@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: devopsflow999/frontend
+  tag: main-v0.1.1
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources: {}
+
+env:
+  VITE_AUTH_BASE: http://auth:3000
+  VITE_CATALOG_BASE: http://catalog:3001
+  VITE_CART_BASE: http://cart:3002
+  VITE_ORDERS_BASE: http://orders:3003
+  VITE_PAYMENTS_BASE: http://payments:3004

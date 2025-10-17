@@ -1,12 +1,20 @@
 import axios from "axios";
 
+// export const BASES = {
+//   auth: "http://localhost:3000",
+//   catalog: "http://localhost:3001",
+//   cart: "http://localhost:3002",
+//   orders: "http://localhost:3003",
+//   payments: "http://localhost:3004",
+// };
 export const BASES = {
-  auth: "http://localhost:3000",
-  catalog: "http://localhost:3001",
-  cart: "http://localhost:3002",
-  orders: "http://localhost:3003",
-  payments: "http://localhost:3004",
+  auth: import.meta.env.VITE_API_AUTH,
+  catalog: import.meta.env.VITE_API_CATALOG,
+  cart: import.meta.env.VITE_API_CART,
+  orders: import.meta.env.VITE_API_ORDERS,
+  payments: import.meta.env.VITE_API_PAYMENTS,
 };
+
 
 // shared axios client with token interceptor
 const client = axios.create({ timeout: 10000 });

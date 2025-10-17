@@ -5,7 +5,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Enable Yarn via Corepack
-RUN corepack enable && corepack prepare yarn@stable --activate
+# RUN corepack enable && corepack prepare yarn@stable --activate
 
 # Copy package files and lockfile for dependency caching
 COPY package*.json ./

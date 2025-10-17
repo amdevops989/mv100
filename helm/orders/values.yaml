@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: devopsflow999/orders
+  tag: main-v0.1.2
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3003
+
+resources: {}
+
+env:
+  PGUSER: appuser
+  PGPASSWORD: appuser
+  PGDATABASE: mv100db
+  PGHOST: postgres-postgresql.kafka.svc.cluster.local
+  PGPORT: "5432"
+
+  REDIS_URL: redis://redis-master.kafka.svc.cluster.local:6379
+  KAFKA_BROKERS: kafka.kafka.svc.cluster.local:9092
+
+  JWT_SECRET: supersecretkey
+  PORT: "3003"
+
+  #  helm install orders ./orders -n mv100 \
+  #   --set env.STRIPE_SECRET_KEY=sk_test_51RaNzg4TJHeKoXcgLvssqY3YO8ehdG3etb60ahEfAfC3KryGRvXzgKLCqwQB3zHkScJe6oiczRCuHDJtf658mqOa00rwmi2ON8 \
+  #   --set env.STRIPE_WEBHOOK_SECRET=whsec_1ba82957afd637a76c2edbb4dd2edc84156f42dc046095e8ac64e50e7fe50f3c

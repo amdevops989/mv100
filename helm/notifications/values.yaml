@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: devopsflow999/notifications
+  tag: main-v0.1.2
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3005
+
+resources: {}
+
+env:
+  KAFKA_CLIENT_ID: notification-service
+  KAFKA_GROUP_ID: notification-group
+  KAFKA_BROKERS: kafka.kafka.svc.cluster.local:9092
+  KAFKA_TOPICS: mv100db.public.users,mv100db.public.orders,mv100db.public.payments
+
+
+  # JWT_SECRET: supersecretkey
+  # PORT: "3003"
+
+  #  helm install orders ./orders -n mv100 \
+  #   --set env.STRIPE_SECRET_KEY=sk_test_51RaNzg4TJHeKoXcgLvssqY3YO8ehdG3etb60ahEfAfC3KryGRvXzgKLCqwQB3zHkScJe6oiczRCuHDJtf658mqOa00rwmi2ON8 \
+  #   --set env.STRIPE_WEBHOOK_SECRET=whsec_1ba82957afd637a76c2edbb4dd2edc84156f42dc046095e8ac64e50e7fe50f3c

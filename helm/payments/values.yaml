@@ -1,13 +1,13 @@
 replicaCount: 1
 
 image:
-  repository: devopsflow999/auth
-  tag: main-v0.1.4
+  repository: devopsflow999/payments
+  tag: main-v0.1.1
   pullPolicy: IfNotPresent
 
 service:
   type: ClusterIP
-  port: 3000
+  port: 3004
 
 resources: {}
 
@@ -17,9 +17,12 @@ env:
   PGDATABASE: mv100db
   PGHOST: postgres-postgresql.kafka.svc.cluster.local
   PGPORT: "5432"
+  SUCCESS_URL: http://frontend:80/success
+  CANCEL_URL: http://frontend:80/cancel
+  ORDERS_SERVICE_URL: http://orders:3003/orders
 
   REDIS_URL: redis://redis-master.kafka.svc.cluster.local:6379
   KAFKA_BROKERS: kafka.kafka.svc.cluster.local:9092
 
   JWT_SECRET: supersecretkey
-  PORT: "3000"
+  PORT: "3004"
