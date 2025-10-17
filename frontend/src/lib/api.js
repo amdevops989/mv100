@@ -15,7 +15,7 @@ export const BASES = {
   payments: import.meta.env.VITE_API_PAYMENTS,
 };
 
-
+//
 // shared axios client with token interceptor
 const client = axios.create({ timeout: 10000 });
 
