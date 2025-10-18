@@ -73,3 +73,18 @@ curl -X POST http://localhost:3001/products \
 }'
 
 
+
+
+
+## installing istio : 
+curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.23.0 sh -
+cd istio-1.23.0
+export PATH=$PWD/bin:$PATH
+
+istioctl install --set profile=default -y
+
+kubectl create namespace mv100
+kubectl label namespace mv100 istio-injection=enabled
+
+
+kubectl get pods -n mv100 -o wide

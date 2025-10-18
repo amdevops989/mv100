@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: devopsflow999/cart
-  tag: main-v0.1.1
+  tag: main-v0.1.2
   pullPolicy: IfNotPresent
 
 service:
@@ -23,3 +23,5 @@ env:
 
   JWT_SECRET: supersecretkey
   PORT: "3002"
+
+  CORS_ORIGIN: "http://frontend.localdev.me,http://localhost:5173"
