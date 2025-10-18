@@ -1,4 +1,4 @@
-require('dotenv').config(); // <-- Load .env variables
+require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -10,13 +10,32 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-app.use(cors());
+/* ---------------------- 🧩 CORS Setup ---------------------- */
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+  : ['http://localhost:5173']; // fallback for local dev (Vite default port)
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (like curl, postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`❌ CORS blocked for origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 app.use(bodyParser.json());
 
-// Redis setup
+/* ---------------------- 🔗 Redis ---------------------- */
 const redis = new Redis(process.env.REDIS_URL);
 
-// PostgreSQL setup
+/* ---------------------- 🐘 PostgreSQL ---------------------- */
 const pool = new Pool({
   user: process.env.PGUSER,
   host: process.env.PGHOST,
@@ -25,14 +44,14 @@ const pool = new Pool({
   port: Number(process.env.PGPORT),
 });
 
-// Kafka setup
+/* ---------------------- 🦋 Kafka ---------------------- */
 const kafka = new Kafka({
   clientId: process.env.KAFKA_CLIENT_ID,
   brokers: process.env.KAFKA_BROKERS.split(','),
 });
 const producer = kafka.producer();
 
-// Auth middleware
+/* ---------------------- 🔑 Auth Middleware ---------------------- */
 function authMiddleware(req, res, next) {
   const auth = req.headers['authorization'];
   if (!auth) return res.status(401).json({ error: 'No token' });
@@ -41,11 +60,12 @@ function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (err) {
+  } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 }
 
+/* ---------------------- 🚀 App Start ---------------------- */
 async function start() {
   await producer.connect();
 
@@ -67,18 +87,14 @@ async function start() {
     const userId = req.user.userId;
     const items = await redis.hgetall(`cart:${userId}`);
     let total = 0;
-    for (const [pid, qty] of Object.entries(items)) {
-      const client = await pool.connect();
-      try {
-        const r = await client.query('SELECT price FROM products WHERE id=$1', [pid]);
-        if (r.rows.length) total += Number(r.rows[0].price) * Number(qty);
-      } finally {
-        client.release();
-      }
-    }
 
     const client = await pool.connect();
     try {
+      for (const [pid, qty] of Object.entries(items)) {
+        const r = await client.query('SELECT price FROM products WHERE id=$1', [pid]);
+        if (r.rows.length) total += Number(r.rows[0].price) * Number(qty);
+      }
+
       const r = await client.query(
         'INSERT INTO orders (user_id, amount, status) VALUES ($1, $2, $3) RETURNING *',
         [userId, total, 'pending']
@@ -86,7 +102,7 @@ async function start() {
       const order = r.rows[0];
       await producer.send({
         topic: process.env.KAFKA_TOPIC,
-        messages: [{ key: String(order.id), value: JSON.stringify(order) }]
+        messages: [{ key: String(order.id), value: JSON.stringify(order) }],
       });
       await redis.del(`cart:${userId}`);
       res.json({ orderId: order.id, amount: total });
