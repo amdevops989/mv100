@@ -1,0 +1,66 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: catalog
+  namespace: mv100
+spec:
+  replicas: 2
+  strategy:
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: { duration: 30s }
+        - setWeight: 50
+        - pause: { duration: 30s }
+        - setWeight: 100
+      trafficRouting:
+        istio:
+          virtualService:
+            name: catalog-vs
+            routes:
+              - http   # <-- fixed: list of strings, not objects
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3001"
+    spec:
+      containers:
+        - name: catalog
+          image: devopsflow999/catalog:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: PGUSER
+              value: appuser
+            - name: PGPASSWORD
+              value: appuser
+            - name: PGDATABASE
+              value: mv100db
+            - name: PGHOST
+              value: postgres
+            - name: PGPORT
+              value: "5432"
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: KAFKA_BROKERS
+              value: kafka:9092
+            - name: JWT_SECRET
+              value: supersecretkey
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 20

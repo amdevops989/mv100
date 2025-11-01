@@ -1,28 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "myapp.fullname" . }}
+  name: {{ include "catalog.fullname" . }}
   labels:
-    app: {{ include "myapp.name" . }}
+    app: {{ include "catalog.name" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "myapp.name" . }}
+      app: {{ include "catalog.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "myapp.name" . }}
+        app: {{ include "catalog.name" . }}
     spec:
       containers:
-        - name: {{ include "myapp.name" . }}
+        - name: {{ include "catalog.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.port }}
           env:
-            {{- range $key, $value := .Values.env }}
+          {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: "{{ $value }}"
-            {{- end }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}

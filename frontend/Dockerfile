@@ -49,3 +49,11 @@ CMD ["nginx", "-g", "daemon off;"]
 #   --build-arg VITE_API_ORDERS=http://orders.localdev.me \
 #   --build-arg VITE_API_PAYMENTS=http://payments.localdev.me \
 #   .
+
+# env:
+#   VITE_API_AUTH: "http://api.localdev.me/auth"
+#   VITE_API_CATALOG: "http://api.localdev.me/catalog"
+#   VITE_API_CART: "http://api.localdev.me/cart"
+#   VITE_API_ORDERS: "http://api.localdev.me/orders"
+#   VITE_API_PAYMENTS: "http://api.localdev.me/payments"
+

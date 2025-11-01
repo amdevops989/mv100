@@ -1,0 +1,25 @@
+# Stable service
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+  namespace: mv100
+spec:
+  selector:
+    app: auth
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+# Canary service
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-canary
+  namespace: mv100
+spec:
+  selector:
+    app: auth
+  ports:
+    - port: 3000
+      targetPort: 3000

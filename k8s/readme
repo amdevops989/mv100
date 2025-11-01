@@ -1,0 +1,34 @@
+Prerequisites
+
+Minikube or a Kubernetes cluster
+
+Istio installed (istioctl install --set profile=demo -y)
+
+Argo Rollouts CRD installed:
+
+kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts -f https://raw.githubusercontent.com/argoproj/argo-rollouts/stable/manifests/install.yaml
+
+Namespace for our app:
+
+kubectl create namespace mv100
+kubectl label namespace mv100 istio-injection=enabled
+
+Step 1 — API Gateway (Istio Gateway)
+
+File: api-gateway.yaml
+
+Frontend React app will call http://api.localdev.me/<service>
+
+
+kubectl argo rollouts get rollout frontend -n mv100
+kubectl argo rollouts dashboard
+
+
+docker build -t devopsflow999/frontend:test21 \
+  --build-arg VITE_API_AUTH=http://api.localdev.me/auth \
+  --build-arg VITE_API_CATALOG=http://api.localdev.me/catalog \
+  --build-arg VITE_API_CART=http://api.localdev.me/cart \
+  --build-arg VITE_API_ORDERS=http://api.localdev.me/orders \
+  --build-arg VITE_API_PAYMENTS=http://api.localdev.me/payments \
+  .

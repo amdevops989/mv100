@@ -1,0 +1,27 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontend-vs
+  namespace: mv100
+spec:
+  hosts:
+    - "frontend.localdev.me"
+  gateways:
+    - frontend-gateway
+  http:
+    - name: frontend-route
+      match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: frontend.mv100.svc.cluster.local
+            port:
+              number: 80
+          weight: 100
+        - destination:
+            host: frontend-canary.mv100.svc.cluster.local
+            port:
+              number: 80
+          weight: 0

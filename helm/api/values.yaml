@@ -1,0 +1,27 @@
+istio:
+  host: api.localdev.me
+  gatewaySelector:
+    istio: ingressgateway
+  port: 80
+
+routes:
+  - name: auth
+    prefix: /auth
+    host: auth.mv100.svc.cluster.local
+    port: 3000
+  - name: catalog
+    prefix: /catalog
+    host: catalog.mv100.svc.cluster.local
+    port: 3001
+  - name: cart
+    prefix: /cart
+    host: cart.mv100.svc.cluster.local
+    port: 3002
+  - name: orders
+    prefix: /orders
+    host: orders.mv100.svc.cluster.local
+    port: 3003
+  - name: payments
+    prefix: /payments
+    host: payments.mv100.svc.cluster.local
+    port: 3004

@@ -1,0 +1,47 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-vs
+  namespace: mv100
+spec:
+  hosts:
+    - "api.localdev.me"
+  gateways:
+    - api-gateway
+  http:
+    - name: auth-route
+      match:
+        - uri:
+            prefix: "/auth/"
+        - uri:
+            exact: "/auth"
+      rewrite:
+          uri: "/"           # strip the /auth prefix
+      corsPolicy:
+        allowOrigins:
+        - exact: "http://frontend.localdev.me"   # allow the frontend domain
+        allowMethods:
+        - GET
+        - POST
+        - OPTIONS                              # include OPTIONS for preflight
+        allowHeaders:
+        - "*"                                  # allow all headers
+        allowCredentials: false                # or true if needed by your client
+      route:
+        - destination:
+            host: auth.mv100.svc.cluster.local
+            port:
+              number: 3000
+          weight: 100
+        - destination:
+            host: auth-canary.mv100.svc.cluster.local
+            port:
+              number: 3000
+          weight: 0
+      # headers:
+      #   response:
+      #     add:
+      #       Access-Control-Allow-Origin: "http://frontend.localdev.me"
+      #       Access-Control-Allow-Methods: "GET, POST, PUT, DELETE, OPTIONS"
+      #       Access-Control-Allow-Headers: "Content-Type, Authorization"
+

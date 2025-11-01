@@ -1,0 +1,48 @@
+namespace: mv100
+
+replicaCount: 3
+
+image:
+  repository: devopsflow999/catalog
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 3001
+  type: ClusterIP
+
+env:
+  - name: PGUSER
+    value: appuser
+  - name: PGPASSWORD
+    value: appuser
+  - name: PGDATABASE
+    value: mv100db
+  - name: PGHOST
+    value: postgres
+  - name: PGPORT
+    value: "5432"
+  - name: REDIS_URL
+    value: redis://redis:6379
+  - name: KAFKA_BROKERS
+    value: kafka:9092
+  - name: JWT_SECRET
+    value: supersecretkey
+
+istio:
+  host: api.localdev.me
+  gateway: api-gateway
+  prefix: /catalog
+
+rollout:
+  canarySteps:
+    - setWeight: 20
+    - pause: {duration: 30s}
+    - setWeight: 50
+    - pause: {duration: 30s}
+    - setWeight: 100
+  metrics:
+    - name: error-rate
+      query: sum(rate(http_requests_total{app="catalog",status=~"5.."}[1m])) / sum(rate(http_requests_total{app="catalog"}[1m]))
+      failureThreshold: 0.01
+      interval: 30s

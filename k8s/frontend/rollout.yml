@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: frontend
+  namespace: mv100
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: frontend
+  strategy:
+    canary:
+      stableService: frontend
+      canaryService: frontend-canary
+      trafficRouting:
+        istio:
+          virtualService:
+            name: frontend-vs
+            routes:
+              - frontend-route
+      steps:
+        - setWeight: 10
+        - pause:
+            duration: 30s
+        - setWeight: 30
+        - pause:
+            duration: 30s
+        - setWeight: 60
+        - pause:
+            duration: 60s
+        - setWeight: 100
+  template:
+    metadata:
+      labels:
+        app: frontend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: frontend
+          image: devopsflow999/frontend:test22
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          env:
+            - name: VITE_API_AUTH
+              value: "http://api.localdev.me/auth"
+            - name: VITE_API_CATALOG
+              value: "http://api.localdev.me/catalog"
+            - name: VITE_API_CART
+              value: "http://api.localdev.me/cart"
+            - name: VITE_API_ORDERS
+              value: "http://api.localdev.me/orders"
+            - name: VITE_API_PAYMENTS
+              value: "http://api.localdev.me/payments"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

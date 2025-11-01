@@ -15,9 +15,16 @@ const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 const app = express();
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: 'http://frontend.localdev.me',
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // preflight support
 app.use(bodyParser.json());
-app.use(morgan('dev')); // HTTP request logging
+app.use(morgan('dev'));
 
 // PostgreSQL connection
 const pool = new Pool({

@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: auth
+  namespace: mv100
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  strategy:
+    canary:
+      stableService: auth
+      canaryService: auth-canary
+      trafficRouting:
+        istio:
+          virtualService:
+            name: api-vs
+            routes:
+              - auth-route
+      steps:
+        - setWeight: 20
+        - pause: { duration: 30 }
+        - setWeight: 50
+        - pause: { duration: 60 }
+        - setWeight: 100
+  template:
+    metadata:
+      labels:
+        app: auth
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: auth
+          image: devopsflow999/auth:test3
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PGUSER
+              value: appuser
+            - name: PGPASSWORD
+              value: appuser
+            - name: PGDATABASE
+              value: mv100db
+            - name: PGHOST
+              value: postgres-postgresql.kafka.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: REDIS_URL
+              value: redis://redis-master.kafka.svc.cluster.local:6379
+            - name: KAFKA_BROKERS
+              value: kafka.kafka.svc.cluster.local:9092
+            - name: JWT_SECRET
+              value: supersecretkey
+            - name: PORT
+              value: "3000"

@@ -88,3 +88,4 @@ kubectl label namespace mv100 istio-injection=enabled
 
 
 kubectl get pods -n mv100 -o wide
+s

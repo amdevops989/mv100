@@ -1,0 +1,67 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: api-gateway
+  namespace: mv100
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "api.localdev.me"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-vs
+  namespace: mv100
+spec:
+  hosts:
+    - "api.localdev.me"
+  gateways:
+    - api-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /auth
+      route:
+        - destination:
+            host: auth.mv100.svc.cluster.local
+            port:
+              number: 3000
+    - match:
+        - uri:
+            prefix: /catalog
+      route:
+        - destination:
+            host: catalog.mv100.svc.cluster.local
+            port:
+              number: 3001
+    - match:
+        - uri:
+            prefix: /cart
+      route:
+        - destination:
+            host: cart.mv100.svc.cluster.local
+            port:
+              number: 3002
+    - match:
+        - uri:
+            prefix: /orders
+      route:
+        - destination:
+            host: orders.mv100.svc.cluster.local
+            port:
+              number: 3003
+    - match:
+        - uri:
+            prefix: /payments
+      route:
+        - destination:
+            host: payments.mv100.svc.cluster.local
+            port:
+              number: 3004

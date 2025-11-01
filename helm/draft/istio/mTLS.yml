@@ -1,0 +1,9 @@
+# Enable STRICT mTLS for the mv100 namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: mv100-mtls
+  namespace: mv100
+spec:
+  mtls:
+    mode: STRICT

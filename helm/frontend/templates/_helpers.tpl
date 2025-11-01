@@ -1,7 +1,7 @@
-{{- define "myapp.name" -}}
-{{ .Release.Name }}
-{{- end -}}
+{{- define "frontend.name" -}}
+frontend
+{{- end }}
 
-{{- define "myapp.fullname" -}}
+{{- define "frontend.fullname" -}}
 {{ .Release.Name }}
-{{- end -}}
+{{- end }}

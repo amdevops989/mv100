@@ -1,28 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "myapp.fullname" . }}
+  name: {{ include "frontend.fullname" . }}
   labels:
-    app: {{ include "myapp.name" . }}
+    app: {{ include "frontend.name" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "myapp.name" . }}
+      app: {{ include "frontend.name" . }}
   template:
     metadata:
       labels:
-        app: {{ include "myapp.name" . }}
+        app: {{ include "frontend.name" . }}
     spec:
       containers:
-        - name: {{ include "myapp.name" . }}
+        - name: {{ include "frontend.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.port }}
           env:
-            {{- range $key, $value := .Values.env }}
-            - name: {{ $key }}
-              value: "{{ $value }}"
-            {{- end }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
+            - name: VITE_API_AUTH
+              value: "{{ .Values.env.VITE_API_AUTH }}"
+            - name: VITE_API_CATALOG
+              value: "{{ .Values.env.VITE_API_CATALOG }}"
+            - name: VITE_API_CART
+              value: "{{ .Values.env.VITE_API_CART }}"
+            - name: VITE_API_ORDERS
+              value: "{{ .Values.env.VITE_API_ORDERS }}"
+            - name: VITE_API_PAYMENTS
+              value: "{{ .Values.env.VITE_API_PAYMENTS }}"

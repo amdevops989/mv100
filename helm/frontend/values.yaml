@@ -2,23 +2,23 @@ replicaCount: 1
 
 image:
   repository: devopsflow999/frontend
-  # tag: main-v0.1.1
   tag: test21
   pullPolicy: IfNotPresent
 
 service:
-  type: LoadBalancer
+  type: ClusterIP
   port: 80
 
-resources: {}
-
 env:
-  VITE_API_AUTH: http://auth.mv100.svc.cluster.local
-  VITE_API_CATALOG: http://catalog:3001
-  VITE_API_CART: http://cart:3002
-  VITE_API_ORDERS: http://orders:3003
-  VITE_API_PAYMENTS: http://payments:3004
+  VITE_API_AUTH: "http://auth.mv100.svc.cluster.local:3000"
+  VITE_API_CATALOG: "http://catalog.mv100.svc.cluster.local:3001"
+  VITE_API_CART: "http://cart.mv100.svc.cluster.local:3002"
+  VITE_API_ORDERS: "http://orders.mv100.svc.cluster.local:3003"
+  VITE_API_PAYMENTS: "http://payments.mv100.svc.cluster.local:3004"
 
-ingress:
+istio:
   enabled: true
+  gatewaySelector:
+    istio: ingressgateway
   host: frontend.localdev.me
+  port: 80
