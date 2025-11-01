@@ -2,23 +2,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: catalog
+  name: orders
   namespace: mv100
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: catalog
+      app: orders
   strategy:
     canary:
-      stableService: catalog
-      canaryService: catalog-canary
+      stableService: orders
+      canaryService: orders-canary
       trafficRouting:
         istio:
           virtualService:
             name: api-vs
             routes:
-              - catalog-route
+              - orders-route
       steps:
         - setWeight: 20
         - pause:
@@ -30,17 +30,17 @@ spec:
   template:
     metadata:
       labels:
-        app: catalog
+        app: orders
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "3001"
+        prometheus.io/port: "3003"
         prometheus.io/path: "/metrics"
     spec:
       containers:
-        - name: catalog
-          image: devopsflow999/catalog:main-v0.1.2
+        - name: orders
+          image: devopsflow999/orders:test5
           ports:
-            - containerPort: 3001
+            - containerPort: 3003
           env:
             - name: PGUSER
               value: appuser
@@ -56,11 +56,13 @@ spec:
               value: redis://redis-master.kafka.svc.cluster.local:6379
             - name: KAFKA_BROKERS
               value: kafka.kafka.svc.cluster.local:9092
-            - name: KAFKA_CLIENT_ID
-              value: catalog-service
-            - name: KAFKA_TOPIC_PRODUCTS
-              value: mv100db_public_products
-            - name: LOG_LEVEL
-              value: info
+            - name: JWT_SECRET
+              value: supersecretkey
+            - name: STRIPE_SECRET_KEY
+              value: sk_test_51RaNzg4TJHeKoXcgLvssqY3YO8ehdG3etb60ahEfAfC3KryGRvXzgKLCqwQB3zHkScJe6oiczRCuHDJtf658mqOa00rwmi2ON8
+            - name: STRIPE_WEBHOOK_SECRET
+              value: whsec_1ba82957afd637a76c2edbb4dd2edc84156f42dc046095e8ac64e50e7fe50f3c
             - name: PORT
-              value: "3001"
+              value: "3003"
+            - name: CORS_ORIGIN
+              value: http://frontend.localdev.me

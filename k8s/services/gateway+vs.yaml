@@ -13,7 +13,8 @@ spec:
         protocol: HTTP
       hosts:
         - "api.localdev.me"
-# ---
+
+---
 # apiVersion: networking.istio.io/v1beta1
 # kind: VirtualService
 # metadata:
@@ -25,48 +26,74 @@ spec:
 #   gateways:
 #     - api-gateway
 #   http:
-#     - name: auth-route       # ✅ Name required for Rollout
+#     # --------------------------------
+#     # AUTH ROUTE
+#     # --------------------------------
+#     - name: auth-route
 #       match:
 #         - uri:
-#             prefix: /auth
+#             prefix: "/auth/"
+#         - uri:
+#             exact: "/auth"
+#       rewrite:
+#         uri: "/"
+#       corsPolicy:
+#         allowOrigins:
+#           - exact: "http://frontend.localdev.me"
+#         allowMethods:
+#           - GET
+#           - POST
+#           - PUT
+#           - DELETE
+#           - OPTIONS
+#         allowHeaders:
+#           - "*"
+#         allowCredentials: true
+#         maxAge: "1h"
 #       route:
 #         - destination:
 #             host: auth.mv100.svc.cluster.local
 #             port:
 #               number: 3000
+#           weight: 100
+#         - destination:
+#             host: auth-canary.mv100.svc.cluster.local
+#             port:
+#               number: 3000
+#           weight: 0
+
+#     # --------------------------------
+#     # CATALOG ROUTE
+#     # --------------------------------
 #     - name: catalog-route
 #       match:
 #         - uri:
-#             prefix: /catalog
+#             prefix: "/catalog/"
+#         - uri:
+#             exact: "/catalog"
+#       rewrite:
+#         uri: "/"
+#       corsPolicy:
+#         allowOrigins:
+#           - exact: "http://frontend.localdev.me"
+#         allowMethods:
+#           - GET
+#           - POST
+#           - PUT
+#           - DELETE
+#           - OPTIONS
+#         allowHeaders:
+#           - "*"
+#         allowCredentials: true
+#         maxAge: "1h"
 #       route:
 #         - destination:
 #             host: catalog.mv100.svc.cluster.local
 #             port:
 #               number: 3001
-#     - name: cart-route
-#       match:
-#         - uri:
-#             prefix: /cart
-#       route:
+#           weight: 100
 #         - destination:
-#             host: cart.mv100.svc.cluster.local
+#             host: catalog-canary.mv100.svc.cluster.local
 #             port:
-#               number: 3002
-#     - name: orders-route
-#       match:
-#         - uri:
-#             prefix: /orders
-#       route:
-#         - destination:
-#             host: orders.mv100.svc.cluster.local
-#             port:
-#               number: 3003
-#     - name: payments-route
-#       match:
-#         - uri:
-#             prefix: /payments
-#       route:
-#         - destination:
-#             host: payments.mv100.svc.cluster.local
-#             port:
-#               number: 3004
+#               number: 3001
+#           weight: 0

@@ -11,23 +11,29 @@ const jwt = require('jsonwebtoken');
 const app = express();
 
 /* ---------------------- 🧩 CORS Setup ---------------------- */
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : ['http://localhost:5173']; // fallback for local dev (Vite default port)
+// const allowedOrigins = process.env.CORS_ORIGIN
+//   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+//   : ['http://localhost:5173']; // fallback for local dev (Vite default port)
+
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     // allow requests with no origin (like curl, postman)
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       console.warn(`❌ CORS blocked for origin: ${origin}`);
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true,
+// }));
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // allow requests with no origin (like curl, postman)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`❌ CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(bodyParser.json());

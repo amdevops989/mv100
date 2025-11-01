@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: devopsflow999/frontend:test22
+          image: devopsflow999/frontend:test31
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

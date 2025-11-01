@@ -65,3 +65,67 @@ spec:
             port:
               number: 3001
           weight: 0
+    - name: cart-route
+      match:
+        - uri:
+            prefix: "/cart/"
+        - uri:
+            exact: "/cart"
+      rewrite:
+        uri: "/"           # strip /cart prefix
+      corsPolicy:
+        allowOrigins:
+          - exact: "http://frontend.localdev.me"
+        allowMethods:
+          - GET
+          - POST
+          - OPTIONS
+          - PUT
+          - DELETE
+        allowHeaders:
+          - "*"
+        allowCredentials: true
+        maxAge: "1h"
+      route:
+        - destination:
+            host: cart.mv100.svc.cluster.local
+            port:
+              number: 3002
+          weight: 100
+        - destination:
+            host: cart-canary.mv100.svc.cluster.local
+            port:
+              number: 3002
+          weight: 0
+    - name: orders-route
+      match:
+        - uri:
+            prefix: "/orders/"
+        - uri:
+            exact: "/orders"
+#      rewrite:
+#        uri: "/"           # strip /orders prefix
+      corsPolicy:
+        allowOrigins:
+          - exact: "http://frontend.localdev.me"
+        allowMethods:
+          - GET
+          - POST
+          - OPTIONS
+          - PUT
+          - DELETE
+        allowHeaders:
+          - "*"
+        allowCredentials: true
+        maxAge: "1h"
+      route:
+        - destination:
+            host: orders.mv100.svc.cluster.local
+            port:
+              number: 3003
+          weight: 100
+        - destination:
+            host: orders-canary.mv100.svc.cluster.local
+            port:
+              number: 3003
+          weight: 0

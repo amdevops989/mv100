@@ -16,7 +16,8 @@ const app = express();
 
 // Middleware
 const corsOptions = {
-  origin: 'http://frontend.localdev.me',
+  // origin: 'http://frontend.localdev.me',
+  origin: '*',
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true

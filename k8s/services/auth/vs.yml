@@ -26,7 +26,8 @@ spec:
         - OPTIONS                              # include OPTIONS for preflight
         allowHeaders:
         - "*"                                  # allow all headers
-        allowCredentials: false                # or true if needed by your client
+        allowCredentials: true
+        maxAge: "1h"               # or true if needed by your client
       route:
         - destination:
             host: auth.mv100.svc.cluster.local

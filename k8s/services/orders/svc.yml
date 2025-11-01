@@ -1,23 +1,23 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: catalog
+  name: orders
   namespace: mv100
 spec:
   selector:
-    app: catalog
+    app: orders
   ports:
-    - port: 3001
-      targetPort: 3001
+    - port: 3003
+      targetPort: 3003
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: catalog-canary
+  name: orders-canary
   namespace: mv100
 spec:
   selector:
-    app: catalog
+    app: orders
   ports:
-    - port: 3001
-      targetPort: 3001
+    - port: 3003
+      targetPort: 3003
