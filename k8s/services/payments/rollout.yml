@@ -1,0 +1,94 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: payments
+  namespace: mv100
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: payments
+  strategy:
+    canary:
+      stableService: payments
+      canaryService: payments-canary
+      trafficRouting:
+        istio:
+          virtualService:
+            name: api-vs
+            routes:
+              - payments-route
+      steps:
+        - setWeight: 20
+        - pause:
+            duration: 30s
+        - setWeight: 50
+        - pause:
+            duration: 60s
+        - setWeight: 100
+  template:
+    metadata:
+      labels:
+        app: payments
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3004"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: payments
+          image: devopsflow999/payments:main-v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3004
+          env:
+            - name: PGUSER
+              value: appuser
+            - name: PGPASSWORD
+              value: appuser
+            - name: PGDATABASE
+              value: mv100db
+            - name: PGHOST
+              value: postgres-postgresql.kafka.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: REDIS_URL
+              value: redis://redis-master.kafka.svc.cluster.local:6379
+            - name: KAFKA_BROKERS
+              value: kafka.kafka.svc.cluster.local:9092
+            - name: JWT_SECRET
+              value: supersecretkey
+            - name: STRIPE_SECRET_KEY
+              value: sk_test_51RaNzg4TJHeKoXcgLvssqY3YO8ehdG3etb60ahEfAfC3KryGRvXzgKLCqwQB3zHkScJe6oiczRCuHDJtf658mqOa00rwmi2ON8
+            - name: STRIPE_WEBHOOK_SECRET
+              value: whsec_1ba82957afd637a76c2edbb4dd2edc84156f42dc046095e8ac64e50e7fe50f3c
+            - name: PORT
+              value: "3004"
+            - name: CORS_ORIGIN
+              value: http://frontend.localdev.me
+            - name: SUCCESS_URL
+              value: http://frontend.localdev.me/success
+            - name: CANCEL_URL
+              value: http://frontend.localdev.me/cancel
+            - name: ORDERS_SERVICE_URL
+              value: http://api.localdev.me:3003/orders
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 3004
+          #   initialDelaySeconds: 3
+          #   periodSeconds: 5
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 3004
+          #   initialDelaySeconds: 20
+          #   periodSeconds: 20

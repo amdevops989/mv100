@@ -68,6 +68,8 @@ spec:
               value: "http://api.localdev.me/orders"
             - name: VITE_API_PAYMENTS
               value: "http://api.localdev.me/payments"
+            - name: VITE_STRIPE_KEY
+              value: "pk_test_51RaNzg4TJHeKoXcgSPviBiP7dixSbHCfU4lvSSCCX9LDUc4ebYILr5XOEaL3iJf9h3lMjO6w9Z6gnDW5lPD4wJXN00tI4PoG5y"
           resources:
             requests:
               cpu: "100m"
