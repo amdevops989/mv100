@@ -30,12 +30,15 @@ const app = express();
 //   credentials: true,
 // }));
 
-app.use(cors({
-  origin: '*',
+const corsOptions = {
+  origin: 'https://frontend.localdev.me', // exact URL of your frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // required if using cookies or auth headers
+};
 
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // preflight support
 app.use(bodyParser.json());
 
 /* ---------------------- 🔗 Redis ---------------------- */

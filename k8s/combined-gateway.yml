@@ -1,0 +1,31 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: unified-gateway
+  namespace: mv100
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    # HTTP redirect to HTTPS for all hosts
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "frontend.localdev.me"
+        - "api.localdev.me"
+      tls:
+        httpsRedirect: true
+
+    # HTTPS listener for all localdev.me subdomains
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "frontend.localdev.me"
+        - "api.localdev.me"
+      tls:
+        mode: SIMPLE
+        credentialName: wildcard-credential

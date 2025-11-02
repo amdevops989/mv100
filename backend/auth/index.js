@@ -16,14 +16,15 @@ const app = express();
 
 // Middleware
 const corsOptions = {
-  // origin: 'http://frontend.localdev.me',
-  origin: '*',
+  origin: 'https://frontend.localdev.me', // must match exactly
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
-  credentials: true
+  credentials: true, // allow cookies / auth headers
 };
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // preflight support
+
 app.use(bodyParser.json());
 app.use(morgan('dev'));
 

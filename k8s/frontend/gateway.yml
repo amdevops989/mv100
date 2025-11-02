@@ -8,8 +8,11 @@ spec:
     istio: ingressgateway
   servers:
     - port:
-        number: 80
-        name: http-frontend
-        protocol: HTTP
+        number: 443
+        name: https-frontend
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: localdev-credential
       hosts:
         - "frontend.localdev.me"

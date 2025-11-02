@@ -66,13 +66,13 @@ spec:
             - name: PORT
               value: "3004"
             - name: CORS_ORIGIN
-              value: http://frontend.localdev.me
+              value: https://frontend.localdev.me
             - name: SUCCESS_URL
-              value: http://frontend.localdev.me/success
+              value: https://frontend.localdev.me/success
             - name: CANCEL_URL
-              value: http://frontend.localdev.me/cancel
+              value: https://frontend.localdev.me/cancel
             - name: ORDERS_SERVICE_URL
-              value: http://api.localdev.me:3003/orders
+              value: https://api.localdev.me:3003/orders
           resources:
             requests:
               cpu: "100m"

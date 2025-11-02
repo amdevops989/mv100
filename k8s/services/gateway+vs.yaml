@@ -8,92 +8,11 @@ spec:
     istio: ingressgateway
   servers:
     - port:
-        number: 80
-        name: http
-        protocol: HTTP
+        number: 443
+        name: https-api
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: localdev-credential
       hosts:
         - "api.localdev.me"
-
----
-# apiVersion: networking.istio.io/v1beta1
-# kind: VirtualService
-# metadata:
-#   name: api-vs
-#   namespace: mv100
-# spec:
-#   hosts:
-#     - "api.localdev.me"
-#   gateways:
-#     - api-gateway
-#   http:
-#     # --------------------------------
-#     # AUTH ROUTE
-#     # --------------------------------
-#     - name: auth-route
-#       match:
-#         - uri:
-#             prefix: "/auth/"
-#         - uri:
-#             exact: "/auth"
-#       rewrite:
-#         uri: "/"
-#       corsPolicy:
-#         allowOrigins:
-#           - exact: "http://frontend.localdev.me"
-#         allowMethods:
-#           - GET
-#           - POST
-#           - PUT
-#           - DELETE
-#           - OPTIONS
-#         allowHeaders:
-#           - "*"
-#         allowCredentials: true
-#         maxAge: "1h"
-#       route:
-#         - destination:
-#             host: auth.mv100.svc.cluster.local
-#             port:
-#               number: 3000
-#           weight: 100
-#         - destination:
-#             host: auth-canary.mv100.svc.cluster.local
-#             port:
-#               number: 3000
-#           weight: 0
-
-#     # --------------------------------
-#     # CATALOG ROUTE
-#     # --------------------------------
-#     - name: catalog-route
-#       match:
-#         - uri:
-#             prefix: "/catalog/"
-#         - uri:
-#             exact: "/catalog"
-#       rewrite:
-#         uri: "/"
-#       corsPolicy:
-#         allowOrigins:
-#           - exact: "http://frontend.localdev.me"
-#         allowMethods:
-#           - GET
-#           - POST
-#           - PUT
-#           - DELETE
-#           - OPTIONS
-#         allowHeaders:
-#           - "*"
-#         allowCredentials: true
-#         maxAge: "1h"
-#       route:
-#         - destination:
-#             host: catalog.mv100.svc.cluster.local
-#             port:
-#               number: 3001
-#           weight: 100
-#         - destination:
-#             host: catalog-canary.mv100.svc.cluster.local
-#             port:
-#               number: 3001
-#           weight: 0

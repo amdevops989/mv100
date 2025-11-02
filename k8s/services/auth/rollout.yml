@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
         - name: auth
-          image: devopsflow999/auth:test3
+          image: devopsflow999/auth:test4
           ports:
             - containerPort: 3000
           env:

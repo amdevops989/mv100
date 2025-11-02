@@ -65,4 +65,4 @@ spec:
             - name: PORT
               value: "3003"
             - name: CORS_ORIGIN
-              value: http://frontend.localdev.me
+              value: https://frontend.localdev.me

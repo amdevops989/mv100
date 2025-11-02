@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: devopsflow999/frontend:test31
+          image: devopsflow999/frontend:test32
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -59,15 +59,15 @@ spec:
             periodSeconds: 20
           env:
             - name: VITE_API_AUTH
-              value: "http://api.localdev.me/auth"
+              value: "https://api.localdev.me/auth"
             - name: VITE_API_CATALOG
-              value: "http://api.localdev.me/catalog"
+              value: "https://api.localdev.me/catalog"
             - name: VITE_API_CART
-              value: "http://api.localdev.me/cart"
+              value: "https://api.localdev.me/cart"
             - name: VITE_API_ORDERS
-              value: "http://api.localdev.me/orders"
+              value: "https://api.localdev.me/orders"
             - name: VITE_API_PAYMENTS
-              value: "http://api.localdev.me/payments"
+              value: "https://api.localdev.me/payments"
             - name: VITE_STRIPE_KEY
               value: "pk_test_51RaNzg4TJHeKoXcgSPviBiP7dixSbHCfU4lvSSCCX9LDUc4ebYILr5XOEaL3iJf9h3lMjO6w9Z6gnDW5lPD4wJXN00tI4PoG5y"
           resources:
